@@ -1,6 +1,7 @@
-import 'package:calender_app/screens/bottomnaviagtor.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'bottomnaviagtor.dart';
 import 'home.dart';
 import 'question1.dart';
 
@@ -15,15 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
   final Color primaryPink = const Color(0xFFFF4F8B);
   final Color lightPink = const Color(0xFFFF80AB);
 
-  @override
-  void initState() {
-    super.initState();
-    checkUserSetup();
-  }
-
   Future<void> checkUserSetup() async {
-    await Future.delayed(const Duration(seconds: 2)); // splash delay
-
     final prefs = await SharedPreferences.getInstance();
     final hasData = prefs.containsKey('periodLength') &&
         prefs.containsKey('cycleLength') &&
@@ -42,28 +35,103 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFFE4EC), // Light pink background
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            // App Icon or Logo (optional)
-            Icon(Icons.calendar_month, color: primaryPink, size: 80),
-            const SizedBox(height: 20),
-            Text(
-              'Period Tracker',
-              style: TextStyle(
-                fontSize: 24,
-                color: primaryPink,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+            // Background image only above icon
+            SizedBox(
+              height: 300,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Image.asset(
+                      'assets/image2.png', // Your background image
+                      width: 500,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 30),
-            const CircularProgressIndicator(
-              color: Colors.pinkAccent,
-              strokeWidth: 3,
+            // App Icon
+            Container(
+              width: 125,
+              height: 125,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.pinkAccent.withOpacity(0.13),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                'assets/appicon.png', // Your custom app icon here
+                fit: BoxFit.contain,
+              ),
             ),
+            const SizedBox(height: 6),
+            // Title with Google Fonts
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'My ',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.pink[900],
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'Calendar',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: primaryPink,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            // "Let's Start" Button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    checkUserSetup();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryPink,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: Text(
+                    "Let's Start",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 90),
           ],
         ),
       ),

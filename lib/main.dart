@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'screens/splash.dart';
 import 'screens/question1.dart';
 import 'screens/bottomnaviagtor.dart'; // add this
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
   runApp(const PeriodTrackerApp());
 }
 

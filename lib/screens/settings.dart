@@ -1,8 +1,10 @@
 import 'package:calender_app/screens/pregnancysetupscreen.dart';
 import 'package:calender_app/screens/question1.dart';
 import 'package:calender_app/screens/question2.dart';
+import 'package:calender_app/screens/reminder.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'notifier.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int periodLength = 5;
   bool isPregnancyMode = false;
 
+  // Keep all your existing methods (initState, _loadSettings, _updatePregnancyMode, _resetData)
   @override
   void initState() {
     super.initState();
@@ -38,7 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       isPregnancyMode = value;
     });
-    modeChangeNotifier.notify(); // <-- Notifies all listening pages
+    modeChangeNotifier.notify();
   }
 
   Future<void> _resetData() async {
@@ -56,263 +59,259 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text(
+        title: Text(
           "Reset Data",
-          style: TextStyle(color: Color(0xFFFD6BA2), fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+              color: Color(0xFFFD6BA2),
+              fontWeight: FontWeight.bold
+          ),
         ),
-        content: const Text(
+        content: Text(
           "Are you sure you want to reset your data?",
-          style: TextStyle(fontSize: 16),
+          style: GoogleFonts.poppins(fontSize: 16),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Color(0xFFFD6BA2))),
+            child: Text(
+              "Cancel",
+              style: GoogleFonts.poppins(color: Color(0xFFFD6BA2)),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               _resetData();
             },
-            child: const Text("Yes, Reset", style: TextStyle(color: Colors.red)),
+            child: Text(
+              "Yes, Reset",
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildSettingItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    String? subtitle,
+    bool showDivider = true,
+  }) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Color(0xFFFD6BA2).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Color(0xFFFD6BA2),
+                    size: 20,
+                  ),
+                ),
+                SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      if (subtitle != null)
+                        Text(
+                          subtitle,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: Colors.grey[400], size: 22),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: Colors.grey[200],
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    const mainPink = Color(0xFFFD6BA2);
-    final lightPink = Color(0xFFF9F3FF);
-    final accentPurple = Color(0xFFB35AFF);
-
     return Scaffold(
-      backgroundColor: lightPink,
+      backgroundColor: Color(0xFFFFE6EE),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        leading: Icon(Icons.chevron_left ,color: Colors.black , size: 30,),
+        title: Text(
           "Settings",
-          style: TextStyle(
-            color: mainPink,
-            fontWeight: FontWeight.bold,
+          style: GoogleFonts.poppins(
+            color: Colors.black,
             fontSize: 22,
-            letterSpacing: 1,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        iconTheme: const IconThemeData(color: mainPink),
-        centerTitle: true,
       ),
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF9F3FF), Color(0xFFFDE5F2)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      body: ListView(
+        children: [
+          _buildSettingItem(
+            icon: Icons.water_drop_outlined,
+            title: "Period Length",
+            subtitle: "$periodLength days",
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const OnboardStep1(fromSettings: true)),
+              );
+              _loadSettings();
+            },
           ),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(22.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.97),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: mainPink.withOpacity(0.10),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
+          _buildSettingItem(
+            icon: Icons.calendar_today_outlined,
+            title: "Cycle Length",
+            subtitle: "$cycleLength days",
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OnboardStep2(periodLength: periodLength, fromSettings: true),
+                ),
+              );
+              _loadSettings();
+            },
+          ),
+          _buildSettingItem(
+            icon: Icons.color_lens_outlined,
+            title: "Themes",
+            onTap: () {
+              // Add themes functionality
+            },
+          ),
+          _buildSettingItem(
+            icon: Icons.notifications_outlined,
+            title: "Reminders",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RemindersScreen()),
+              );
+            },
+          ),
+          _buildSettingItem(
+            icon: Icons.pregnant_woman_outlined,
+            title: "Pregnancy Mode",
+            subtitle: isPregnancyMode ? "On" : "Off",
+            onTap: () async {
+              if (!isPregnancyMode) {
+                await _updatePregnancyMode(true);
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PregnancySetupScreen()),
+                );
+                if (result == true) {
+                  await _updatePregnancyMode(true);
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "Pregnancy mode turned ON.",
+                        style: GoogleFonts.poppins(),
+                      ),
+                      backgroundColor: Color(0xFFFD6BA2),
+                    ),
+                  );
+                } else {
+                  await _updatePregnancyMode(false);
+                }
+              } else {
+                await _updatePregnancyMode(false);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('pregnancyStartDate');
+                await prefs.remove('pregnancyDisplayOption');
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "Pregnancy mode turned OFF.",
+                      style: GoogleFonts.poppins(),
+                    ),
+                    backgroundColor: Colors.pinkAccent,
                   ),
-                ],
+                );
+              }
+            },
+          ),
+          _buildSettingItem(
+            icon: Icons.privacy_tip_outlined,
+            title: "Privacy",
+            onTap: () {
+              // Add privacy functionality
+            },
+          ),
+          _buildSettingItem(
+            icon: Icons.feedback_outlined,
+            title: "Feed back",
+            onTap: () {
+              // Add feedback functionality
+            },
+          ),
+          _buildSettingItem(
+            icon: Icons.share_outlined,
+            title: "Share with friends",
+            showDivider: false,
+            onTap: () {
+              // Add share functionality
+            },
+          ),
+          SizedBox(height: 0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: ElevatedButton(
+              onPressed: _showResetConfirmation,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFFD6BA2),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 15),
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    /// 🔘 Pregnancy Mode Toggle
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.pregnant_woman, color: mainPink),
-                            const SizedBox(width: 14),
-                            const Text(
-                              "Pregnancy Mode",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: mainPink,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Switch(
-                          value: isPregnancyMode,
-                          activeColor: mainPink,
-                          onChanged: (value) async {
-                            if (value) {
-                              await _updatePregnancyMode(true);
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const PregnancySetupScreen()),
-                              );
-                              if (result == true) {
-                                await _updatePregnancyMode(true);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Pregnancy mode turned ON."),
-                                    backgroundColor: mainPink,
-                                  ),
-                                );
-                              } else {
-                                await _updatePregnancyMode(false);
-                              }
-                            } else {
-                              await _updatePregnancyMode(false);
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.remove('pregnancyStartDate');
-                              await prefs.remove('pregnancyDisplayOption');
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Pregnancy mode turned OFF."),
-                                  backgroundColor: Colors.pinkAccent,
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    /// 💧 Period Length
-                    GestureDetector(
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const OnboardStep1(fromSettings: true)),
-                        );
-                        _loadSettings();
-                      },
-                      child: Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: mainPink.withOpacity(0.14),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            child: const Icon(Icons.water_drop, color: mainPink, size: 26),
-                          ),
-                          const SizedBox(width: 14),
-                          const Text(
-                            "Period Length: ",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: mainPink,
-                            ),
-                          ),
-                          Text(
-                            "$periodLength days",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: mainPink,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    /// 📅 Cycle Length
-                    GestureDetector(
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => OnboardStep2(periodLength: periodLength, fromSettings: true),
-                          ),
-                        );
-                        _loadSettings();
-                      },
-                      child: Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: accentPurple.withOpacity(0.16),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            child: Icon(Icons.calendar_month, color: accentPurple, size: 26),
-                          ),
-                          const SizedBox(width: 14),
-                          Text(
-                            "Cycle Length: ",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: accentPurple,
-                            ),
-                          ),
-                          Text(
-                            "$cycleLength days",
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: accentPurple,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 44),
-
-                    Divider(
-                      color: Colors.grey.withOpacity(0.13),
-                      thickness: 1.5,
-                      height: 14,
-                    ),
-                    const SizedBox(height: 36),
-
-                    /// 🔄 Reset Button
-                    Center(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.restart_alt, color: Colors.white),
-                        label: const Text(
-                          "Reset App Data",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: mainPink,
-                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 28),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 4,
-                          shadowColor: mainPink.withOpacity(0.19),
-                        ),
-                        onPressed: _showResetConfirmation,
-                      ),
-                    ),
-                  ],
+              child: Text(
+                "Reset App Data",
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
-        ),
+          SizedBox(height: 20),
+        ],
       ),
     );
   }

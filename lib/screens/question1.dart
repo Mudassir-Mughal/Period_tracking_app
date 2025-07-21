@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'question2.dart';
 
 class OnboardStep1 extends StatefulWidget {
@@ -15,7 +16,6 @@ class _OnboardStep1State extends State<OnboardStep1> {
 
   final Color primaryPink = const Color(0xFFFF4F8B);
   final Color lightPink = const Color(0xFFFF80AB);
-  final Color bgWhite = Colors.white;
 
   late FixedExtentScrollController _scrollController;
 
@@ -34,153 +34,175 @@ class _OnboardStep1State extends State<OnboardStep1> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgWhite,
+      backgroundColor: const Color(0xFFFFE4EC), // Light pink like screenshot
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: SizedBox(
-                    width: 80,
-                    child: LinearProgressIndicator(
-                      value: 1 / 3,
-                      backgroundColor: lightPink.withOpacity(0.2),
-                      color: primaryPink,
-                      minHeight: 6,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: lightPink.withOpacity(0.13),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryPink.withOpacity(0.07),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'How many days does your period usually last?',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: primaryPink,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 25),
-                      SizedBox(
-                        height: 150,
-                        child: ListWheelScrollView.useDelegate(
-                          controller: _scrollController,
-                          itemExtent: 40,
-                          diameterRatio: 1.3,
-                          perspective: 0.003,
-                          squeeze: 1.15,
-                          physics: const FixedExtentScrollPhysics(),
-                          onSelectedItemChanged: (value) {
-                            setState(() {
-                              selectedDay = value + 1;
-                            });
-                          },
-                          childDelegate: ListWheelChildBuilderDelegate(
-                            childCount: 15,
-                            builder: (context, index) {
-                              final isSelected = selectedDay == index + 1;
-                              return AnimatedDefaultTextStyle(
-                                duration: const Duration(milliseconds: 200),
-                                style: TextStyle(
-                                  fontSize: isSelected ? 26 : 18,
-                                  color: isSelected
-                                      ? primaryPink
-                                      : Colors.grey.shade600,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                                child: Text('${index + 1} days'),
-                              );
-                            },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top navigation row
+              SizedBox(
+                height: 50,
+                child: Row(
+
+                  children: [
+
+                    // Centered, small progress indicator
+                    Expanded(
+                      child: Center(
+                      child: Padding(
+                           padding: const EdgeInsets.only(left: 30),
+                          child: SizedBox(
+                          width: 180, // Smaller progress indicator
+                          child: LinearProgressIndicator(
+                            value: 1 / 3,
+                            backgroundColor: lightPink.withOpacity(0.2),
+                            color: primaryPink,
+                            minHeight: 10,
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Selected: $selectedDay days',
-                        style: TextStyle(
-                          color: primaryPink,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+                      ),),
+                    ),
+                    // Gap between progress indicator and Skip
+
+                    // Skip text
+
+
+                  ],
                 ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
+              ),
+              // Vertical gap after top navigation row
+              const SizedBox(height: 90),
 
-                    onPressed: () async {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setInt('periodLength', selectedDay);
-                      if (widget.fromSettings) {
-                        Navigator.pop(context); // just return to settings page
-                      } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => OnboardStep2(periodLength: selectedDay)),
-                        );
-                      }
+              // Question
+              Center(
+                child: Text(
+                  'How many days does your period usually last?',
+                  style: GoogleFonts.poppins(
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    color: primaryPink,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
 
+              // Increased gap between question and picker
+              const SizedBox(height: 90),
+
+              // Picker UI (centered with height showing 3 items)
+              Center(
+                child: Container(
+                  height: 120, // 48 * 3 = 144, shows 3 items at a time
+                  child: ListWheelScrollView.useDelegate(
+                    controller: _scrollController,
+                    itemExtent: 48,
+                    diameterRatio: 1.2,
+                    perspective: 0.003,
+                    squeeze: 1.18,
+                    physics: const FixedExtentScrollPhysics(),
+                    onSelectedItemChanged: (value) {
+                      setState(() {
+                        selectedDay = value + 1;
+                      });
                     },
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: EdgeInsets.zero,
-                      backgroundColor: Colors.transparent,
-                    ),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [primaryPink, lightPink],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Next',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                    childDelegate: ListWheelChildBuilderDelegate(
+                      childCount: 15,
+                      builder: (context, index) {
+                        final isSelected = selectedDay == index + 1;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Container(
+                            height: 48,
+                            decoration: isSelected
+                                ? BoxDecoration(
+                              color: primaryPink.withOpacity(0.32),
+                              borderRadius: BorderRadius.circular(14),
+                            )
+                                : null,
+                            alignment: Alignment.center,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Always center the number
+                                Center(
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: isSelected ? 26 : 26,
+                                      color: Colors.black,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                                // Show "Days" only if selected, aligned to right
+                                if (isSelected)
+                                  Positioned(
+                                    right: 20, // adjust gap from right as you want
+                                    child: Text(
+                                      'Days',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 26,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-              ],
-            ),
+              ),
+
+              const Spacer(),
+              Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child:SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setInt('periodLength', selectedDay);
+                    if (widget.fromSettings) {
+                      Navigator.pop(context);
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => OnboardStep2(periodLength: selectedDay)),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+
+                    backgroundColor: primaryPink,
+                  ),
+
+                  child: Text(
+                    'Next',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ),),
+
+              // Bottom gap
+              const SizedBox(height: 90),
+            ],
           ),
         ),
       ),
