@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,19 +45,19 @@ class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFDF3F7),
         elevation: 0,
         title: Text(
           "Pregnancy",
-          style: TextStyle(
-            color: mainPink,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+          style: GoogleFonts.poppins(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+            fontSize: 20,
             letterSpacing: 1,
+
           ),
         ),
-        iconTheme: IconThemeData(color: mainPink),
-        centerTitle: true,
+        iconTheme: IconThemeData(color: Colors.black),
       ),
       backgroundColor: const Color(0xFFFDF3F7),
       body: SingleChildScrollView(
@@ -69,20 +70,20 @@ class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
               child: Column(
                 children: [
                   const Icon(Icons.cake, size: 80, color: Color(0xFFFD6BA2)),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   Text(
                     '🎉 Congratulations!',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       color: mainPink,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     'Count down the days until your baby arrives!',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                    style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[700]),
                   ),
                 ],
               ),
@@ -100,7 +101,7 @@ class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
                 title: const Text("Estimated start of gestation"),
                 subtitle: Text(
                   DateFormat('MMM dd, yyyy').format(selectedStartDate),
-                  style: const TextStyle(color: Colors.blue),
+                  style: GoogleFonts.poppins(color: Colors.blue , fontSize: 14),
                 ),
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -136,9 +137,9 @@ class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
             ),
             const SizedBox(height: 20),
 
-            const Text(
+             Text(
               "Display on the homepage",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14),
             ),
             const SizedBox(height: 8),
 
@@ -168,64 +169,47 @@ class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
             ),
             const SizedBox(height: 25),
 
-            /// 🔴 Turn Off Pregnancy Mode
-            GestureDetector(
-              onTap: () async {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('pregnancyMode', false);
-                await prefs.remove('pregnancyStartDate');
-                await prefs.remove('pregnancyDisplayOption');
-                if (!mounted) return;
-                Navigator.pop(context, false); // Return false to indicate turn off
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pregnancy mode turned OFF')),
-                );
-              },
-              child: const Text(
-                "Turn off pregnancy mode",
-                style: TextStyle(
-                  color: Colors.pink,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
 
-            const SizedBox(height: 30),
+
+            /// 🔴 Turn Off Pregnancy Mode
 
             /// ✅ Save Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setBool('pregnancyMode', true);
-                  await prefs.setString('pregnancyStartDate', selectedStartDate.toIso8601String());
-                  await prefs.setInt('pregnancyDisplayOption', selectedOption);
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed:  () async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('pregnancyMode', true);
+    await prefs.setString('pregnancyStartDate', selectedStartDate.toIso8601String());
+    await prefs.setInt('pregnancyDisplayOption', selectedOption);
 
-                  if (!mounted) return;
-                  Navigator.pop(context, true); // Return true to indicate saved
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Pregnancy mode saved')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: mainPink,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+    if (!mounted) return;
+    Navigator.pop(context, true); // Return true to indicate saved
+    ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Pregnancy mode saved')),
+    );
+    },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFFD6BA2),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
-                ),
-                child: const Text(
-                  "Save",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  child: Text(
+                    'Save',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),

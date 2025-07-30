@@ -1,3 +1,4 @@
+import 'package:calender_app/screens/question3.dart';
 import 'package:calender_app/screens/reminder.dart';
 import 'package:calender_app/screens/settings.dart';
 import 'package:calender_app/screens/calender.dart';
@@ -7,8 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notifier.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -93,7 +94,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    setState(() { _isLoaded = true; });
+    setState(() {
+      _isLoaded = true;
+    });
   }
 
   void _calculatePhases() {
@@ -119,21 +122,22 @@ class _HomeScreenState extends State<HomeScreen> {
     nextOvulation = ovulationDay;
   }
 
-  void goToCalendar({DateTime? focusDay}) {
+  void goToQuestion3({DateTime? focusDay}) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => Calender(),
+        builder: (_) =>
+            OnboardStep3(periodLength: periodLength, cycleLength: cycleLength),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context).currentTheme;
+
     if (!_isLoaded) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (isPregnancy && pregnancyStartDate != null) {
@@ -141,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context,
         pregnancyStartDate!,
         pregnancyOption,
-            () async {
+        () async {
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const PregnancySetupScreen()),
@@ -161,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ovulationDay == null ||
         periodEnd == null) {
       return Scaffold(
-        backgroundColor: Color(0xFFFFE6EE),
+        backgroundColor: theme.backgroundColor,
         body: Center(
           child: Text(
             "No period data found. Please set your period info in settings.",
@@ -172,277 +176,312 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Color(0xFFFFE6EE),
-      body: SafeArea(
-        child: SingleChildScrollView(  // Added SingleChildScrollView
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 12, left: 10, right: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+      backgroundColor: theme.backgroundColor,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(theme.backgroundImage, fit: BoxFit.cover),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Header (aligned with Calendar and other pages)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      top: 4,
+                      bottom: 0,
+                      left: 2,
+                      right: 10,
+                    ),
+                    child: Row(
                       children: [
                         IconButton(
-                        icon:Icon(Icons.settings, color: Color(0xFFFD6BA2), size: 28,),
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                          );
-                          await _loadAllUserData();
-                        },),
+                          icon: Icon(
+                            Icons.settings,
+                            color: theme.accentColor,
+                            size: 28,
+                          ),
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SettingsScreen(),
+                              ),
+                            );
+                            await _loadAllUserData();
+                          },
+                        ),
                         Text(
                           'Period Tracker',
                           style: GoogleFonts.poppins(
-                            fontSize: 22,
+                            color: Colors.black,
+                            fontSize: 20,
+                            letterSpacing: 0.2,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(
+                            Icons.notifications,
+                            color: theme.accentColor,
+                            size: 28,
+                          ),
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RemindersScreen(),
+                              ),
+                            );
+                            await _loadAllUserData();
+                          },
+                          splashRadius: 28,
+                        ),
                       ],
                     ),
-                    IconButton(
-                      icon: Icon(Icons.notifications, color: Color(0xFFFD6BA2) , size: 28,),
-                      onPressed: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const RemindersScreen()),
-                        );
-                        await _loadAllUserData();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // Today's Status Circle with proper shape
-              // Replace the existing circle container with this code
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Hexagon shape image
-                  Image.asset(
-                    'assets/vector15.png',  // Your hexagon image path
-                    width: 220,
-                    height: 220,
-                    fit: BoxFit.contain,
                   ),
+                  // ...rest of your widgets
 
-                  // Pink accent line (bottom left curve)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    child: CustomPaint(
-                      size: Size(140, 140),
 
-                    ),
-                  ),
-
-                  // Content
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
+                  // Today's Status Circle with proper shape
+                  // Replace the existing circle container with this code
+                  Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Text(
-                        'Today',
-                        style: GoogleFonts.poppins(
-                          color: Color(0xFFFD6BA2),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      // Hexagon shape image
+                      Image.asset(
+                        'assets/homeicon.png', // Your hexagon image path
+                        width: 220,
+                        height: 220,
+                        fit: BoxFit.contain,
                       ),
-                      SizedBox(height: 0),
-                      Text(
-                        isOnPeriod ? 'Period Day' : 'Ovulation Day',
-                        style: GoogleFonts.poppins(
-                          color: Color(0xFFFD6BA2),
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+
+                      // Pink accent line (bottom left curve)
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        child: CustomPaint(size: Size(140, 140)),
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        nextPeriodDate != null
-                            ? '${DateFormat('MMM d').format(nextPeriodDate!)} - Next Period'
-                            : 'No data',
-                        style: GoogleFonts.poppins(
-                          color: Colors.black,
-                          fontSize: 13,
-                          fontWeight: FontWeight.normal
-                        ),
+
+                      // Content
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Today',
+                            style: GoogleFonts.poppins(
+                              color: theme.accentColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 0),
+                          Text(
+                            isOnPeriod
+                                ? 'Period Day'
+                                : (DateTime.now().isAtSameMomentAs(
+                                        ovulationDay!,
+                                      )
+                                      ? 'Ovulation Day'
+                                      : (DateTime.now().isAfter(
+                                                  fertileStart!,
+                                                ) &&
+                                                DateTime.now().isBefore(
+                                                  fertileEnd!,
+                                                )
+                                            ? 'Fertile Day'
+                                            : 'Normal Day')),
+                            style: GoogleFonts.poppins(
+                              color: theme.accentColor,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            nextPeriodDate != null
+                                ? '${DateFormat('MMM d').format(nextPeriodDate!)} - Next Period'
+                                : 'No data',
+                            style: GoogleFonts.poppins(
+                              color: Colors.black,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.normal,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
+
+                  SizedBox(height: 12),
+
+                  // Edit Period Button
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 60),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => goToQuestion3(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.accentColor,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Text(
+                          'Edit Period',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 12),
+
+                  // Cycle Phase Card with horizontal scroll
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Cycle phase',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 15),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: BouncingScrollPhysics(),
+                          child: Row(
+                            children: [
+                              // Today's actual phase
+                              _buildPhaseBox(
+                                'Today',
+                                isOnPeriod
+                                    ? 'Period Day'
+                                    : (DateTime.now().isAtSameMomentAs(
+                                            ovulationDay!,
+                                          )
+                                          ? 'Ovulation'
+                                          : (DateTime.now().isAfter(
+                                                      fertileStart!,
+                                                    ) &&
+                                                    DateTime.now().isBefore(
+                                                      fertileEnd!,
+                                                    )
+                                                ? 'Fertile Day'
+                                                : 'Normal Day')),
+                                isOnPeriod
+                                    ? Image.asset(
+                                        'assets/cyclephase1.png',
+                                        fit: BoxFit.contain,
+                                      )
+                                    : Image.asset(
+                                        'assets/cyclephase2.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                isOnPeriod
+                                    ? theme.accentColor
+                                    : (DateTime.now().isAtSameMomentAs(
+                                            ovulationDay!,
+                                          )
+                                          ? Colors.orange
+                                          : (DateTime.now().isAfter(
+                                                      fertileStart!,
+                                                    ) &&
+                                                    DateTime.now().isBefore(
+                                                      fertileEnd!,
+                                                    )
+                                                ? theme.accentColor
+                                                : Colors.grey)),
+                              ),
+
+                              SizedBox(
+                                width: 15,
+                              ), // Added more space between boxes
+                              // Fertile Window
+                              _buildPhaseBox(
+                                DateFormat('MMM d').format(fertileStart!),
+                                'Fertility Window',
+                                Image.asset('assets/cyclephase2.png'),
+                                theme.accentColor,
+                              ),
+                              SizedBox(
+                                width: 15,
+                              ), // Added more space between boxes
+                              // Next Period
+                              _buildPhaseBox(
+                                DateFormat('MMM d').format(nextPeriodDate!),
+                                'Next Period',
+                                Image.asset('assets/cyclephase3.png'),
+                                theme.accentColor,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 12),
+
+                  // Cycle Day Info
+                  if (lastPeriodStart != null &&
+                      cycleStart != null &&
+                      cycleEnd != null &&
+                      fertileStart != null &&
+                      fertileEnd != null &&
+                      ovulationDay != null &&
+                      periodEnd != null)
+                    InteractiveTimelineCard(
+                      periodStart: cycleStart!,
+                      periodEnd: periodEnd!,
+                      fertileStart: fertileStart!,
+                      fertileEnd: fertileEnd!,
+                      ovulationDay: ovulationDay!,
+                      cycleEnd: cycleEnd!,
+                      today: DateTime.now(),
+                      currentCycleDay: currentCycleDay,
+                      selectedDayIdx: selectedDayIdx,
+                      onDayTap: (int idx) {
+                        setState(() {
+                          selectedDayIdx = idx;
+                        });
+                      },
+                      periodLength: periodLength,
+                      cycleLength: cycleLength,
+                    ),
+
+                  SizedBox(height: 12),
+
+                  SizedBox(height: 12), // Added bottom padding
                 ],
               ),
-
-              SizedBox(height: 20),
-
-              // Edit Period Button
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 60),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => goToCalendar(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFD6BA2),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: Text(
-                      'Edit Period',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 20),
-
-              // Cycle Phase Card with horizontal scroll
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 20),
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cycle phase',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 15),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: BouncingScrollPhysics(),
-                  child: Row(
-                    children: [
-                      // Today's actual phase
-                      _buildPhaseBox(
-                        'Today',
-                        isOnPeriod ? 'Period Day' :
-                        (DateTime.now().isAtSameMomentAs(ovulationDay!) ? 'Ovulation' :
-                        (DateTime.now().isAfter(fertileStart!) && DateTime.now().isBefore(fertileEnd!) ? 'Fertile Window' : 'Regular Day')),
-                        isOnPeriod ? Icons.water_drop :
-                        (DateTime.now().isAtSameMomentAs(ovulationDay!) ? Icons.brightness_1 :
-                        (DateTime.now().isAfter(fertileStart!) && DateTime.now().isBefore(fertileEnd!) ? Icons.favorite : Icons.circle_outlined)),
-                        isOnPeriod ? Color(0xFFFD6BA2) :
-                        (DateTime.now().isAtSameMomentAs(ovulationDay!) ? Colors.orange :
-                        (DateTime.now().isAfter(fertileStart!) && DateTime.now().isBefore(fertileEnd!) ? Color(0xFFFD6BA2) : Colors.grey)),
-                      ),
-                      SizedBox(width: 15), // Added more space between boxes
-                      // Fertile Window
-                      _buildPhaseBox(
-                        DateFormat('MMM d').format(fertileStart!),
-                        'Fertility Window',
-                        Icons.favorite,
-                        Color(0xFFFD6BA2),
-                      ),
-                      SizedBox(width: 15), // Added more space between boxes
-                      // Next Period
-                      _buildPhaseBox(
-                        DateFormat('MMM d').format(nextPeriodDate!),
-                        'Next Period',
-                        Icons.calendar_today,
-                        Color(0xFFFD6BA2),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
           ),
-
-              SizedBox(height: 20),
-
-              // Cycle Day Info
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 20),
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Jul 29 - Cycle Day ${currentCycleDay}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'LOW CHANCE of Pregnancy',
-                      style: GoogleFonts.poppins(
-                        color: Color(0xFFFD6BA2),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 15),
-                    Stack(
-                      children: [
-                        Container(
-                          height: 8,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            gradient: LinearGradient(
-                              colors: [
-                                Color(0xFFFD6BA2),
-                                Colors.orange,
-                                Colors.yellow,
-                              ],
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          top: -20,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '${currentCycleDay}D',
-                              style: GoogleFonts.poppins(fontSize: 12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 20),  // Added bottom padding
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildPhaseBox(String date, String title, IconData icon, Color color) {
+  Widget _buildPhaseBox(String date, String title, Widget image, Color color) {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.25, // Reduced width to prevent overflow
+      width: MediaQuery.of(context).size.width * 0.25,
       padding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
       decoration: BoxDecoration(
         border: Border.all(color: color.withOpacity(0.3)),
@@ -463,14 +502,14 @@ class _HomeScreenState extends State<HomeScreen> {
             overflow: TextOverflow.ellipsis,
           ),
           SizedBox(height: 8),
-          Icon(icon, color: color, size: 22),
+
+          // ✅ Injected image widget (with fixed size wrapper)
+          SizedBox(width: 28, height: 28, child: image),
+
           SizedBox(height: 8),
           Text(
             title,
-            style: GoogleFonts.poppins(
-              color: Colors.grey[600],
-              fontSize: 12,
-            ),
+            style: GoogleFonts.poppins(color: Colors.grey[800], fontSize: 12),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -481,7 +520,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // PREGNANCY HOME WIDGET (no cat image, compact and clean)
-  Widget pregnancyHomeWidget(BuildContext context, DateTime startDate, int displayOption, VoidCallback onOptionTap) {
+  Widget pregnancyHomeWidget(
+      BuildContext context,
+      DateTime startDate,
+      int displayOption,
+      VoidCallback onOptionTap,
+      ) {
+    final theme = Provider.of<ThemeProvider>(context).currentTheme;
     const mainPink = Color(0xFFFD6BA2);
     final now = DateTime.now();
     final dueDate = startDate.add(const Duration(days: 280));
@@ -503,222 +548,254 @@ class _HomeScreenState extends State<HomeScreen> {
     double t2Progress = (weeks >= 13 && weeks < 27)
         ? ((weeks - 13) + days / 7) / 14
         : (weeks >= 27 ? 1 : 0);
-    double t3Progress = (weeks >= 27)
-        ? ((weeks - 27) + days / 7) / 13
-        : 0;
+    double t3Progress = (weeks >= 27) ? ((weeks - 27) + days / 7) / 13 : 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F3FF),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          "Home",
-          style: TextStyle(
-            color: mainPink,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            letterSpacing: 1,
-          ),
-        ),
-        iconTheme: const IconThemeData(color: mainPink),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-              await _loadAllUserData();
-              setState(() {});
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
+      backgroundColor: Colors.transparent,
+      extendBody: true,
+      extendBodyBehindAppBar: true,
+      body: Stack(
         children: [
-          const SizedBox(height: 30),
-          Center(
-            child: Column(
+          Positioned.fill(
+            child: Image.asset(
+              theme.backgroundImage,
+              fit: BoxFit.cover,
+            ),
+          ),
+          SafeArea(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
               children: [
-                Text(
-                  displayOption == 0
-                      ? "${weeks}W${days}D"
-                      : "$daysLeft days",
-                  style: const TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 3,
+                // --- Custom top bar like Report page ---
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, left: 10, right: 10),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Home',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.settings),
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                          );
+                          await _loadAllUserData();
+                          // ignore: invalid_use_of_protected_member
+                          (context as Element).markNeedsBuild();
+                        },
+                        splashRadius: 28,
+                        color: mainPink,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 7),
-                Text(
-                  displayOption == 0
-                      ? "since pregnancy"
-                      : "to baby born",
-                  style: const TextStyle(
-                    fontSize: 17,
-                    color: Colors.black87,
+                const SizedBox(height: 30),
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        displayOption == 0 ? "${weeks}W${days}D" : "$daysLeft days",
+                        style: GoogleFonts.poppins(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        displayOption == 0 ? "since pregnancy" : "to baby born",
+                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: onOptionTap,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: mainPink,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 28,
+                            vertical: 10,
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          "Pregnancy option",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: onOptionTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: mainPink,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-                    elevation: 0,
+                const SizedBox(height: 12),
+                // Trimester Card
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: mainPink.withOpacity(0.06),
+                        blurRadius: 13,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    "Pregnancy option",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        trimester,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: mainPink,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            "${weeks} weeks",
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            "$daysLeft days to baby born",
+                            style: GoogleFonts.poppins(
+                              color: Colors.grey[800],
+                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 13,
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFDFE9),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: FractionallySizedBox(
+                                widthFactor: t1Progress.clamp(0, 1),
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: mainPink,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            flex: 14,
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD6E4F7),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: FractionallySizedBox(
+                                widthFactor: t2Progress.clamp(0, 1),
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFB1BDFB),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            flex: 13,
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE7C6FF),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: FractionallySizedBox(
+                                widthFactor: t3Progress.clamp(0, 1),
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFB35AFF),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'T1',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            'T2',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            'T3',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                myCyclesCard(periodLength, cycleLength),
+                // Remove bottom padding/SizedBox to avoid white line
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          // Trimester Card
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: mainPink.withOpacity(0.06),
-                  blurRadius: 13,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  trimester,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: mainPink,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      "${weeks} weeks",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      "$daysLeft days to baby born",
-                      style: TextStyle(
-                        color: Colors.grey[800],
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 13,
-                      child: Container(
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFDFE9),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: FractionallySizedBox(
-                          widthFactor: t1Progress.clamp(0, 1),
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: mainPink,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      flex: 14,
-                      child: Container(
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD6E4F7),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: FractionallySizedBox(
-                          widthFactor: t2Progress.clamp(0, 1),
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFB1BDFB),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      flex: 13,
-                      child: Container(
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE7C6FF),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: FractionallySizedBox(
-                          widthFactor: t3Progress.clamp(0, 1),
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFB35AFF),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 7),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text('T1', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                    Text('T2', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                    Text('T3', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          myCyclesCard(periodLength, cycleLength),
         ],
       ),
     );
@@ -732,17 +809,15 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(16),
         color: Colors.white,
       ),
-      padding: const EdgeInsets.symmetric(
-          vertical: 15, horizontal: 18),
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
+            children:  [
               Text(
                 "My cycles",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 18),
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 16),
               ),
               Spacer(),
             ],
@@ -757,54 +832,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   padding: const EdgeInsets.symmetric(
-                      vertical: 16, horizontal: 0),
+                    vertical: 16,
+                    horizontal: 0,
+                  ),
                   child: Column(
                     children: [
                       Text(
                         "$periodLength Days",
-                        style: TextStyle(
-                            color: Colors.pink.shade900,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20),
+                        style: GoogleFonts.poppins(
+                          color: Colors.pink.shade900,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                       Text(
                         "Average period",
-                        style: TextStyle(
-                            color: Colors.black54, fontSize: 13),
+                        style: GoogleFonts.poppins(color: Colors.black54, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF6CB),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 16, horizontal: 0),
-                  child: Column(
-                    children: [
-                      Text(
-                        "$cycleLength Days",
-                        style: TextStyle(
-                            color: Colors.orange.shade800,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        "Average cycle",
-                        style: TextStyle(
-                            color: Colors.black54, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ],
@@ -824,6 +874,8 @@ class InteractiveTimelineCard extends StatelessWidget {
   final int currentCycleDay;
   final int? selectedDayIdx;
   final Function(int) onDayTap;
+  final int cycleLength;
+  final int periodLength;
 
   const InteractiveTimelineCard({
     super.key,
@@ -837,12 +889,15 @@ class InteractiveTimelineCard extends StatelessWidget {
     required this.currentCycleDay,
     required this.selectedDayIdx,
     required this.onDayTap,
+    required this.cycleLength,
+    required this.periodLength,
   });
 
   String _chanceStr(DateTime day) {
     if (!day.isBefore(periodStart) && !day.isAfter(periodEnd)) return "LOW";
     if (!day.isBefore(fertileStart) && !day.isAfter(fertileEnd)) return "HIGH";
-    if (day.isAfter(fertileEnd) && day.isBefore(fertileEnd.add(const Duration(days: 4)))) {
+    if (day.isAfter(fertileEnd) &&
+        day.isBefore(fertileEnd.add(const Duration(days: 4)))) {
       return "MEDIUM";
     }
     return "LOW";
@@ -863,161 +918,179 @@ class InteractiveTimelineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalDays = cycleEnd.difference(periodStart).inDays + 1;
-    final todayIdx = today.difference(periodStart).inDays.clamp(0, totalDays - 1);
+    final todayIdx = today
+        .difference(periodStart)
+        .inDays
+        .clamp(0, totalDays - 1);
 
-    // Which day is selected? If none, show today.
     int displayDayIdx = selectedDayIdx ?? todayIdx;
     DateTime displayDay = periodStart.add(Duration(days: displayDayIdx));
     int displayCycleDay = displayDay.difference(periodStart).inDays + 1;
     final chance = _chanceStr(displayDay);
 
-    // Timeline bar constants
-    const segmentWidth = 18.0;
-    final timelineWidth = segmentWidth * totalDays;
-
-    final bigDate = DateFormat.MMMd().format(displayDay);
-    final boldTitle = "$bigDate - Cycle Day $displayCycleDay";
-
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+      padding: EdgeInsets.all(15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Large bold title line
           Text(
-            boldTitle,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+            "${DateFormat('MMM d').format(displayDay)} - Cycle Day $displayCycleDay",
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
             ),
           ),
-          // Chance line
-          Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 10),
-            child: Text(
-              "$chance - Chance of getting pregnant",
-              style: TextStyle(
-                color: _chanceColor(chance),
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+          SizedBox(height: 2),
+
+          Text(
+            "$chance Chance of Pregnancy",
+            style: GoogleFonts.poppins(
+              color: Colors.grey[600],
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
+          SizedBox(height: 12),
+
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // White background for gaps
+              Container(
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
-            ),
-          ),
-          // Timeline with marker
-          SizedBox(
-            height: 60,
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: timelineWidth,
-                      child: Stack(
-                        children: [
-                          Row(
-                            children: List.generate(totalDays, (i) {
-                              DateTime barDay = periodStart.add(Duration(days: i));
-                              String ch = _chanceStr(barDay);
-                              return GestureDetector(
-                                onTap: () => onDayTap(i),
-                                child: Container(
-                                  width: segmentWidth,
-                                  height: 14,
-                                  decoration: BoxDecoration(
-                                    color: _chanceColor(ch).withOpacity(0.7),
-                                    borderRadius: i == 0
-                                        ? const BorderRadius.horizontal(left: Radius.circular(7))
-                                        : i == totalDays - 1
-                                        ? const BorderRadius.horizontal(right: Radius.circular(7))
-                                        : BorderRadius.zero,
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                          // Ovulation marker
-                          Positioned(
-                            left: ((ovulationDay.difference(periodStart).inDays + 0.5) * segmentWidth) - 9,
-                            top: -19,
-                            child: Column(
-                              children: [
-                                Icon(Icons.blur_circular, color: Colors.orange, size: 18),
-                                const SizedBox(height: 4),
-                              ],
-                            ),
-                          ),
-                          // Day marker (circle with border)
-                          Positioned(
-                            left: displayDayIdx * segmentWidth + (segmentWidth / 2) - 24,
-                            top: 13,
-                            child: Container(
-                              width: 48,
-                              height: 48,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  color: _chanceColor(chance),
-                                  width: 2,
-                                ),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _chanceColor(chance).withOpacity(0.15),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                "Day\n$displayCycleDay",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: _chanceColor(chance),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+
+              // Timeline segments with gaps
+              Row(
+                children: [
+                  // Period phase (Low chance)
+                  Expanded(
+                    flex: periodLength,
+                    child: Container(
+                      margin: EdgeInsets.only(right: 2), // Gap
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFD6BA2),
+                        borderRadius: BorderRadius.horizontal(
+                          left: Radius.circular(5),
+                          right: Radius.circular(5),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                // Period start marker
-                Positioned(
-                  left: 0,
-                  top: 41,
-                  child: Text(
-                    DateFormat.MMMd().format(periodStart),
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFBDBDBD),
-                        fontWeight: FontWeight.w500),
+                  // Fertile phase (High chance)
+                  Expanded(
+                    flex: 7,
+                    child: Container(
+                      margin: EdgeInsets.symmetric(
+                        horizontal: 2,
+                      ), // Gaps on both sides
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFFB847),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
                   ),
-                ),
-                // Cycle end marker
-                Positioned(
-                  right: 0,
-                  top: 41,
-                  child: Text(
-                    DateFormat.MMMd().format(cycleEnd),
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFBDBDBD),
-                        fontWeight: FontWeight.w500),
+                  // Post-fertile phase (Medium chance)
+                  Expanded(
+                    flex: cycleLength - periodLength - 7,
+                    child: Container(
+                      margin: EdgeInsets.only(left: 2), // Gap
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFFE5EC),
+                        borderRadius: BorderRadius.horizontal(
+                          left: Radius.circular(5),
+                          right: Radius.circular(5),
+                        ),
+                      ),
+                    ),
                   ),
+                ],
+              ),
+
+              // Day marker on top
+              // Replace both Positioned widgets with this single one
+              Positioned(
+                left:
+                    (displayDayIdx / totalDays) *
+                    (MediaQuery.of(context).size.width - 100),
+                bottom: -40, // Adjusted position to be below timeline
+                child: Column(
+                  children: [
+                    Container(width: 1, height: 20, color: Colors.black),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${displayCycleDay} Day',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.pink,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 20), // Space for date marker
+          // Gesture detector for timeline interaction
+          GestureDetector(
+            onHorizontalDragUpdate: (details) {
+              final RenderBox box = context.findRenderObject() as RenderBox;
+              final localPosition = box.globalToLocal(details.globalPosition);
+              final percentage = (localPosition.dx / box.size.width).clamp(
+                0.0,
+                1.0,
+              );
+              final newDayIdx = (percentage * totalDays).round();
+              if (newDayIdx >= 0 && newDayIdx < totalDays) {
+                onDayTap(newDayIdx);
+              }
+            },
+            onTapDown: (details) {
+              final RenderBox box = context.findRenderObject() as RenderBox;
+              final localPosition = box.globalToLocal(details.globalPosition);
+              final percentage = (localPosition.dx / box.size.width).clamp(
+                0.0,
+                1.0,
+              );
+              final newDayIdx = (percentage * totalDays).round();
+              if (newDayIdx >= 0 && newDayIdx < totalDays) {
+                onDayTap(newDayIdx);
+              }
+            },
+            child: Container(height: 30, color: Colors.transparent),
           ),
         ],
       ),

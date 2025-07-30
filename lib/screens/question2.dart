@@ -49,7 +49,7 @@ class _OnboardStep2State extends State<OnboardStep2> {
                   children: [
                     // Back button
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 22),
+                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
                       splashRadius: 22,
                       onPressed: () {
                         Navigator.of(context).pop();
@@ -82,7 +82,7 @@ class _OnboardStep2State extends State<OnboardStep2> {
                 child: Text(
                   'How many days does your cycle usually last?',
                   style: GoogleFonts.poppins(
-                    fontSize: 19,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: primaryPink,
                   ),
@@ -129,9 +129,9 @@ class _OnboardStep2State extends State<OnboardStep2> {
                                   child: Text(
                                     '${index + 16}',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 26,
+                                      fontSize: 20,
                                       color: Colors.black,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                     ),
                                   ),
                                 ),
@@ -142,9 +142,9 @@ class _OnboardStep2State extends State<OnboardStep2> {
                                     child: Text(
                                       'Days',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 26,
+                                        fontSize: 20,
                                         color: Colors.black,
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),

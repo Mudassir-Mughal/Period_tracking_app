@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -20,25 +22,25 @@ class _RemindersScreenState extends State<RemindersScreen> {
     'remind_ovulation',
   ];
   final Map<String, String> reminderNames = {
-    'remind_period_start': "Period starts",
+    'remind_period_start': "Period Start",
     'remind_period_end': "Period ends",
     'remind_note': "Note reminder",
     'remind_fertility': "Fertility reminder",
     'remind_ovulation': "Ovulation reminder",
   };
   final Map<String, String> reminderDescriptions = {
-    'remind_period_start': "Next Period - 1 day left",
-    'remind_period_end': "Remind you to log period end",
-    'remind_note': "Remind you to add a note",
-    'remind_fertility': "Remind you before fertile days",
-    'remind_ovulation': "Remind you before ovulation",
+    'remind_period_start': "Period first day reminder",
+    'remind_period_end': "Period last day reminder",
+    'remind_note': "Reminds your note",
+    'remind_fertility': "Remind you first fertile day",
+    'remind_ovulation': "Remind you ovulation day",
   };
   final Map<String, String> defaultMessages = {
-    'remind_period_start': "Period is starting soon.",
-    'remind_period_end': "Period is over? Log it and check cycle analysis now.",
-    'remind_note': "Don't forget your period note.",
-    'remind_fertility': "Fertile days are coming.",
-    'remind_ovulation': "Ovulation is near.",
+    'remind_period_start': "Your periods start from today",
+    'remind_period_end': "Period is over? Last day of your period.",
+    'remind_note': "Don't forget you added a note about today",
+    'remind_fertility': "Fertile days are start from today",
+    'remind_ovulation': "Ovulation day come.",
   };
 
   Map<String, bool> reminderEnabled = {};
@@ -57,38 +59,52 @@ class _RemindersScreenState extends State<RemindersScreen> {
     super.initState();
     _initNotifications().then((_) {
       _loadPrefs();
+      requestBatteryOptimizationPermission();
     });
   }
 
-  Future<void> _initNotifications() async {
-    await AwesomeNotifications().initialize(
-      null,
-      [
-        NotificationChannel(
-          channelKey: 'reminder_channel',
-          channelName: 'Reminders',
-          channelDescription: 'Reminders for period and ovulation',
-          defaultColor: mainPink,
-          ledColor: Colors.white,
-          importance: NotificationImportance.High,
-          channelShowBadge: true,
-          playSound: true,
-          soundSource: 'resource://raw/notification',
-        ),
-      ],
-      debug: true,
-    );
+  Future<void> requestBatteryOptimizationPermission() async {
+    if (Platform.isAndroid) {
+      final platform = MethodChannel('awesome_notifications');
+      try {
+        await platform.invokeMethod('requestIgnoreBatteryOptimizations');
+      } catch (e) {
+        print('Battery optimization exception: $e');
+      }
+    }
+  }
 
-    // Android 13+ runtime permission handling
+  void requestNotificationPermission() async {
+    bool isAllowed = await AwesomeNotifications().isNotificationAllowed();
+    if (!isAllowed) {
+      bool requested = await AwesomeNotifications()
+          .requestPermissionToSendNotifications();
+      if (!requested) {
+        AwesomeNotifications().showNotificationConfigPage();
+      }
+    }
+  }
+
+  Future<void> _initNotifications() async {
+    await AwesomeNotifications().initialize(null, [
+      NotificationChannel(
+        channelKey: 'reminder_channel',
+        channelName: 'Reminders',
+        channelDescription: 'Channel for reminder notifications',
+        defaultColor: const Color(0xFF9D50DD),
+        ledColor: Colors.white,
+        importance: NotificationImportance.Max,
+        channelShowBadge: true,
+        playSound: true,
+        enableVibration: true,
+      ),
+    ], debug: true);
+
     if (Platform.isAndroid) {
       final deviceInfo = DeviceInfoPlugin();
       final androidInfo = await deviceInfo.androidInfo;
-      if (androidInfo.version.sdkInt >= 33) {
-        if (!await AwesomeNotifications().isNotificationAllowed()) {
-          await AwesomeNotifications().requestPermissionToSendNotifications();
-        }
-      }
-    } else {
+      int sdkInt = androidInfo.version.sdkInt;
+
       if (!await AwesomeNotifications().isNotificationAllowed()) {
         await AwesomeNotifications().requestPermissionToSendNotifications();
       }
@@ -119,7 +135,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
     Map<String, String> loadedMsg = {};
 
     for (final key in reminderKeys) {
-      loadedEnabled[key] = prefs.getBool(key) ?? false; // default OFF for first launch
+      loadedEnabled[key] =
+          prefs.getBool(key) ?? false; // default OFF for first launch
       final timeStr = prefs.getString('${key}_time');
       if (timeStr != null) {
         final parts = timeStr.split(':');
@@ -134,7 +151,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
       } else {
         loadedTime[key] = const TimeOfDay(hour: 8, minute: 0);
       }
-      loadedMsg[key] = prefs.getString('${key}_msg') ?? defaultMessages[key] ?? "";
+      loadedMsg[key] =
+          prefs.getString('${key}_msg') ?? defaultMessages[key] ?? "";
     }
 
     setState(() {
@@ -191,21 +209,37 @@ class _RemindersScreenState extends State<RemindersScreen> {
     final today = DateTime.now();
     return DateTime(today.year, today.month, today.day);
   }
+
   DateTime? getNextPeriodEndDate() {
     final today = DateTime.now();
-    return DateTime(today.year, today.month, today.day).add(const Duration(days: 4));
+    return DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).add(const Duration(days: 4));
   }
+
   DateTime? getNextNoteDate() {
     final today = DateTime.now();
     return DateTime(today.year, today.month, today.day);
   }
+
   DateTime? getNextFertilityDate() {
     final today = DateTime.now();
-    return DateTime(today.year, today.month, today.day).add(const Duration(days: 10));
+    return DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).add(const Duration(days: 10));
   }
+
   DateTime? getNextOvulationDate() {
     final today = DateTime.now();
-    return DateTime(today.year, today.month, today.day).add(const Duration(days: 14));
+    return DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).add(const Duration(days: 14));
   }
 
   Future<void> _scheduleReminderNotification(String key) async {
@@ -214,8 +248,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
     final msg = reminderMsg[key] ?? defaultMessages[key] ?? '';
     final title = reminderNames[key] ?? 'Reminder';
 
+    // Cancel previous notification with this ID
     await AwesomeNotifications().cancel(id);
 
+    // Determine correct day based on reminder type
     DateTime? day;
     if (key == 'remind_period_start') {
       day = getNextPeriodStartDate();
@@ -228,12 +264,29 @@ class _RemindersScreenState extends State<RemindersScreen> {
     } else if (key == 'remind_ovulation') {
       day = getNextOvulationDate();
     }
-    if (day == null) return;
+
+    if (day == null) {
+      debugPrint('[Reminder] No day found for key $key');
+      return;
+    }
 
     final now = DateTime.now();
-    DateTime scheduledDate = DateTime(day.year, day.month, day.day, time.hour, time.minute);
+    DateTime scheduledDate = DateTime(
+      day.year,
+      day.month,
+      day.day,
+      time.hour,
+      time.minute,
+    );
 
-    if (scheduledDate.isBefore(now)) return;
+    if (scheduledDate.isBefore(now)) {
+      debugPrint(
+        '[Reminder] Scheduled date $scheduledDate is in the past. Skipping.',
+      );
+      return;
+    }
+
+    debugPrint('[Reminder] Scheduling "$title" on $scheduledDate');
 
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
@@ -245,7 +298,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
       ),
       schedule: NotificationCalendar.fromDate(
         date: scheduledDate,
-        preciseAlarm: true,
+        preciseAlarm: true, // Important for Android 12+
+        allowWhileIdle: true, // Makes it work even if phone is idle
       ),
     );
   }
@@ -255,7 +309,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
   }
 
   Widget _buildTimePicker(String key) {
-    final TimeOfDay time = reminderTime[key] ?? const TimeOfDay(hour: 8, minute: 0);
+    final TimeOfDay time =
+        reminderTime[key] ?? const TimeOfDay(hour: 8, minute: 0);
     int selectedHour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
     int selectedMinute = time.minute;
     String selectedPeriod = time.period == DayPeriod.am ? 'AM' : 'PM';
@@ -266,9 +321,15 @@ class _RemindersScreenState extends State<RemindersScreen> {
     int minuteIndex = minutes.indexOf(selectedMinute);
     int periodIndex = selectedPeriod == 'AM' ? 0 : 1;
 
-    FixedExtentScrollController hourCtrl = FixedExtentScrollController(initialItem: hourIndex);
-    FixedExtentScrollController minCtrl = FixedExtentScrollController(initialItem: minuteIndex);
-    FixedExtentScrollController ampmCtrl = FixedExtentScrollController(initialItem: periodIndex);
+    FixedExtentScrollController hourCtrl = FixedExtentScrollController(
+      initialItem: hourIndex,
+    );
+    FixedExtentScrollController minCtrl = FixedExtentScrollController(
+      initialItem: minuteIndex,
+    );
+    FixedExtentScrollController ampmCtrl = FixedExtentScrollController(
+      initialItem: periodIndex,
+    );
 
     return Container(
       margin: const EdgeInsets.only(top: 18, bottom: 7),
@@ -298,9 +359,16 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       if (selectedPeriod == "PM") hour += 12;
                       if (hour == 24) hour = 0;
                       setState(() {
-                        reminderTime[key] = TimeOfDay(hour: hour, minute: selectedMinute);
+                        reminderTime[key] = TimeOfDay(
+                          hour: hour,
+                          minute: selectedMinute,
+                        );
                       });
-                      _setTime(key, reminderTime[key] ?? const TimeOfDay(hour: 8, minute: 0));
+                      _setTime(
+                        key,
+                        reminderTime[key] ??
+                            const TimeOfDay(hour: 8, minute: 0),
+                      );
                     },
                     childDelegate: ListWheelChildBuilderDelegate(
                       builder: (ctx, idx) {
@@ -312,7 +380,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: hours[idx] == selectedHour
-                                  ? accentPurple
+                                  ? Color(0xFFFFE6090)
                                   : Colors.grey.shade400,
                             ),
                           ),
@@ -322,7 +390,14 @@ class _RemindersScreenState extends State<RemindersScreen> {
                     ),
                   ),
                 ),
-                Text(":", style: TextStyle(fontSize: 28, color: accentPurple, fontWeight: FontWeight.bold)),
+                Text(
+                  ":",
+                  style: TextStyle(
+                    fontSize: 28,
+                    color: Color(0xFFFFE6090),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 // Minute Picker
                 SizedBox(
                   width: 60,
@@ -337,9 +412,16 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       if (selectedPeriod == "PM") hour += 12;
                       if (hour == 24) hour = 0;
                       setState(() {
-                        reminderTime[key] = TimeOfDay(hour: hour, minute: selectedMinute);
+                        reminderTime[key] = TimeOfDay(
+                          hour: hour,
+                          minute: selectedMinute,
+                        );
                       });
-                      _setTime(key, reminderTime[key] ?? const TimeOfDay(hour: 8, minute: 0));
+                      _setTime(
+                        key,
+                        reminderTime[key] ??
+                            const TimeOfDay(hour: 8, minute: 0),
+                      );
                     },
                     childDelegate: ListWheelChildBuilderDelegate(
                       builder: (ctx, idx) {
@@ -351,7 +433,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: minutes[idx] == selectedMinute
-                                  ? accentPurple
+                                  ? Color(0xFFFFE6090)
                                   : Colors.grey.shade400,
                             ),
                           ),
@@ -375,9 +457,16 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       if (selectedPeriod == "PM") hour += 12;
                       if (hour == 24) hour = 0;
                       setState(() {
-                        reminderTime[key] = TimeOfDay(hour: hour, minute: selectedMinute);
+                        reminderTime[key] = TimeOfDay(
+                          hour: hour,
+                          minute: selectedMinute,
+                        );
                       });
-                      _setTime(key, reminderTime[key] ?? const TimeOfDay(hour: 8, minute: 0));
+                      _setTime(
+                        key,
+                        reminderTime[key] ??
+                            const TimeOfDay(hour: 8, minute: 0),
+                      );
                     },
                     childDelegate: ListWheelChildBuilderDelegate(
                       builder: (ctx, idx) {
@@ -388,8 +477,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: ((idx == 0 && selectedPeriod == 'AM') || (idx == 1 && selectedPeriod == 'PM'))
-                                  ? accentPurple
+                              color:
+                                  ((idx == 0 && selectedPeriod == 'AM') ||
+                                      (idx == 1 && selectedPeriod == 'PM'))
+                                  ? Color(0xFFFFE6090)
                                   : Colors.grey.shade400,
                             ),
                           ),
@@ -412,9 +503,10 @@ class _RemindersScreenState extends State<RemindersScreen> {
     final time = reminderTime[key] ?? const TimeOfDay(hour: 8, minute: 0);
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(top: 2),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -425,41 +517,43 @@ class _RemindersScreenState extends State<RemindersScreen> {
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SwitchListTile(
-            contentPadding: const EdgeInsets.only(left: 15, right: 8, top: 10),
+            contentPadding: const EdgeInsets.only(left: 15, right: 8),
             title: Text(
               reminderNames[key]!,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: mainPink,
-                fontSize: 17,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
               ),
             ),
             subtitle: Text(
               reminderDescriptions[key]!,
-              style: TextStyle(
-                color: accentPurple.withOpacity(0.8),
-                fontSize: 13.5,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: Colors.black.withOpacity(0.8),
               ),
             ),
             value: enabled,
-            activeColor: accentPurple,
+            activeColor: Color(0xFFFFE6090),
             onChanged: (v) async {
               await _setBool(key, v);
             },
           ),
           if (enabled)
             Padding(
-              padding: const EdgeInsets.only(left: 15, right: 8, top: 8, bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
               child: Row(
                 children: [
                   Text(
                     "Notification time",
-                    style: TextStyle(
-                        color: accentPurple,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16),
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
+                    ),
                   ),
                   const Spacer(),
                   GestureDetector(
@@ -468,13 +562,38 @@ class _RemindersScreenState extends State<RemindersScreen> {
                         editingTimeKey = editingTimeKey == key ? null : key;
                       });
                     },
-                    child: Text(
-                      time.format(context),
-                      style: TextStyle(
-                        color: accentPurple,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        decoration: TextDecoration.underline,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(50),
+                        border: Border.all(color: Colors.grey),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            time.format(context),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          AnimatedRotation(
+                            turns: editingTimeKey == key ? 0.5 : 0.0,
+                            duration: const Duration(milliseconds: 300),
+                            child: const Icon(
+                              Icons.keyboard_arrow_down_sharp,
+                              size: 18,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -490,59 +609,43 @@ class _RemindersScreenState extends State<RemindersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: lightPink,
+      backgroundColor: const Color(0xFFFFE6EE), // Light pink
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: mainPink),
-        centerTitle: true,
-        title: const Text(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(
+              context,
+            ); // This takes you back to the previous screen
+          },
+        ),
+        title: Text(
           "Reminders",
-          style: TextStyle(
-            color: Color(0xFFFD6BA2),
-            fontWeight: FontWeight.bold,
+          style: GoogleFonts.poppins(
+            color: Colors.black,
             fontSize: 20,
-            letterSpacing: 1,
+            fontWeight: FontWeight.w500,
           ),
         ),
+        titleSpacing: 0,
+        leadingWidth: 50,
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
         children: [
           Text(
             "Period & Ovulation",
-            style: TextStyle(
-                color: accentPurple.withOpacity(0.7),
-                letterSpacing: 0.1,
-                fontWeight: FontWeight.bold,
-                fontSize: 14),
-          ),
-          const SizedBox(height: 6),
-          ...reminderKeys.map(_reminderCard).toList(),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 0),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: mainPink,
-                padding: const EdgeInsets.symmetric(vertical: 17),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                "Save",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF4A276F).withOpacity(0.7),
             ),
           ),
+          const SizedBox(height: 10),
+          ...reminderKeys.map(_reminderCard).toList(),
+          const SizedBox(height: 30),
         ],
       ),
     );

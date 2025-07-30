@@ -2,10 +2,15 @@ import 'package:calender_app/screens/pregnancysetupscreen.dart';
 import 'package:calender_app/screens/question1.dart';
 import 'package:calender_app/screens/question2.dart';
 import 'package:calender_app/screens/reminder.dart';
+import 'package:calender_app/screens/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 import 'notifier.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -62,8 +67,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: Text(
           "Reset Data",
           style: GoogleFonts.poppins(
-              color: Color(0xFFFD6BA2),
-              fontWeight: FontWeight.bold
+            color: Color(0xFFFD6BA2),
+            fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
@@ -99,85 +104,131 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required VoidCallback onTap,
     String? subtitle,
     bool showDivider = true,
+    Widget? trailing,
   }) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Color(0xFFFD6BA2).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: Color(0xFFFD6BA2),
-                    size: 20,
-                  ),
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 4), // reduced gap
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0xFFFD6BA2).withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Color(0xFFFD6BA2).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                child: Icon(icon, color: Color(0xFFFD6BA2), size: 18),
+              ),
+              SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    if (subtitle != null)
                       Text(
-                        title,
+                        subtitle,
                         style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                          fontSize: 12,
+                          color: Colors.grey[600],
                         ),
                       ),
-                      if (subtitle != null)
-                        Text(
-                          subtitle,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
-                Icon(Icons.chevron_right, color: Colors.grey[400], size: 22),
-              ],
-            ),
+              ),
+              trailing ??
+                  Icon(Icons.chevron_right, color: Colors.grey[400], size: 24),
+            ],
           ),
         ),
-        if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 0.5,
-            color: Colors.grey[200],
-          ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildPregnancySwitchItem() {
+    return _buildSettingItem(
+      icon: Icons.pregnant_woman_outlined,
+      title: "Pregnancy Mode",
+      subtitle: isPregnancyMode ? "On" : "Off",
+      onTap: () async {
+        // no tap action, handled by switch
+      },
+      trailing: Switch.adaptive(
+        value: isPregnancyMode,
+        onChanged: (value) async {
+          if (value) {
+            // Turning ON
+            await _updatePregnancyMode(true);
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PregnancySetupScreen()),
+            );
+            if (result != true) {
+              // user cancelled
+              await _updatePregnancyMode(false);
+            }
+          } else {
+            // Turning OFF
+            await _updatePregnancyMode(false);
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove('pregnancyStartDate');
+            await prefs.remove('pregnancyDisplayOption');
+          }
+          _loadSettings();
+        },
+        activeColor: Color(0xFFFD6BA2),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context).currentTheme;
     return Scaffold(
       backgroundColor: Color(0xFFFFE6EE),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: Icon(Icons.chevron_left ,color: Colors.black , size: 30,),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           "Settings",
           style: GoogleFonts.poppins(
             color: Colors.black,
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
           ),
         ),
+        titleSpacing: 0,
+        leadingWidth: 50,
       ),
       body: ListView(
+        padding: EdgeInsets.symmetric(vertical: 4),
         children: [
           _buildSettingItem(
             icon: Icons.water_drop_outlined,
@@ -186,7 +237,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () async {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const OnboardStep1(fromSettings: true)),
+                MaterialPageRoute(
+                  builder: (_) => const OnboardStep1(fromSettings: true),
+                ),
               );
               _loadSettings();
             },
@@ -199,7 +252,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => OnboardStep2(periodLength: periodLength, fromSettings: true),
+                  builder: (_) => OnboardStep2(
+                    periodLength: periodLength,
+                    fromSettings: true,
+                  ),
                 ),
               );
               _loadSettings();
@@ -209,7 +265,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.color_lens_outlined,
             title: "Themes",
             onTap: () {
-              // Add themes functionality
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ThemeScreen()),
+              );
             },
           ),
           _buildSettingItem(
@@ -222,94 +281,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          _buildSettingItem(
-            icon: Icons.pregnant_woman_outlined,
-            title: "Pregnancy Mode",
-            subtitle: isPregnancyMode ? "On" : "Off",
-            onTap: () async {
-              if (!isPregnancyMode) {
-                await _updatePregnancyMode(true);
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const PregnancySetupScreen()),
-                );
-                if (result == true) {
-                  await _updatePregnancyMode(true);
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        "Pregnancy mode turned ON.",
-                        style: GoogleFonts.poppins(),
-                      ),
-                      backgroundColor: Color(0xFFFD6BA2),
-                    ),
-                  );
-                } else {
-                  await _updatePregnancyMode(false);
-                }
-              } else {
-                await _updatePregnancyMode(false);
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.remove('pregnancyStartDate');
-                await prefs.remove('pregnancyDisplayOption');
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      "Pregnancy mode turned OFF.",
-                      style: GoogleFonts.poppins(),
-                    ),
-                    backgroundColor: Colors.pinkAccent,
-                  ),
-                );
-              }
-            },
-          ),
+          _buildPregnancySwitchItem(),
           _buildSettingItem(
             icon: Icons.privacy_tip_outlined,
-            title: "Privacy",
+            title: "Privacy Policy",
             onTap: () {
               // Add privacy functionality
             },
           ),
           _buildSettingItem(
             icon: Icons.feedback_outlined,
-            title: "Feed back",
+            title: "Feedback",
             onTap: () {
-              // Add feedback functionality
+              launchUrl(Uri.parse('mailto:mughalmudassir33@gmail.com'));
             },
           ),
           _buildSettingItem(
             icon: Icons.share_outlined,
             title: "Share with friends",
-            showDivider: false,
             onTap: () {
-              // Add share functionality
+              const message = 'Check out this awesome app: your link';
+              Share.share(message);
             },
           ),
-          SizedBox(height: 0),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: ElevatedButton(
-              onPressed: _showResetConfirmation,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFD6BA2),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            padding: EdgeInsets.symmetric(horizontal: 60, vertical: 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _showResetConfirmation,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.accentColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
-                padding: EdgeInsets.symmetric(vertical: 15),
-              ),
-              child: Text(
-                "Reset App Data",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                child: Text(
+                  'Reset',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
           ),
+
           SizedBox(height: 20),
         ],
       ),

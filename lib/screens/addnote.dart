@@ -1,13 +1,20 @@
-import 'package:calender_app/screens/settings.dart';
-import 'package:calender_app/screens/calender.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 import 'bottomnaviagtor.dart';
+import 'home.dart';
+import 'settings.dart';
+import 'reminder.dart';
 
 class AddNoteScreen extends StatefulWidget {
-  const AddNoteScreen({super.key});
+  final DateTime? date;
+  final String? existingNote;
+  const AddNoteScreen({super.key, this.date, this.existingNote});
 
   @override
   State<AddNoteScreen> createState() => _AddNoteScreenState();
@@ -16,14 +23,336 @@ class AddNoteScreen extends StatefulWidget {
 class _AddNoteScreenState extends State<AddNoteScreen> {
   DateTime selectedDate = DateTime.now();
   final TextEditingController _noteController = TextEditingController();
+  String? selectedMood;
+  int? selectedFlow;
+  String? selectedIntercourse;
+  String selectedTimes = '0';
+  String selectedCondomOption = "Unprotected";
+  String selectedOrgasm = "No";
+  int intercourseTimes = 0;
+  double? selectedWeight;
+  String? selectedWeightUnit;
+  double? selectedTemperature;
+  String? selectedTemperatureUnit;
+  int selectedGlasses = 0;
+  int glassMl = 250;
+  int targetMl = 2000;
+  List<int> symptomStars = [0, 0, 0, 0];
+
+  final List<String> symptomNames = [
+    "back pain",
+    "Anxiety",
+    "Headache",
+    "Cravings",
+  ];
+  final List<IconData> symptomIcons = [
+    Icons.back_hand,
+    Icons.trending_up,
+    Icons.gavel,
+    Icons.fitness_center,
+  ];
+
+
+
+
+
+  final List<Map<String, String>> moods = [
+    {"emoji": "😇", "label": "Angelic"},
+    {"emoji": "😠", "label": "Angry"},
+    {"emoji": "😰", "label": "Anxious"},
+    {"emoji": "😢", "label": "Ashamed"},
+    {"emoji": "😊", "label": "Happy"},
+    {"emoji": "😔", "label": "Sad"},
+    {"emoji": "😎", "label": "Confident"},
+    {"emoji": "😭", "label": "Crying"},
+    {"emoji": "😴", "label": "Sleepy"},
+    {"emoji": "😤", "label": "Frustrated"},
+    {"emoji": "😍", "label": "In Love"},
+    {"emoji": "🤒", "label": "Sick"},
+  ];
+  List<bool> selectedFlowDrops = [false, false, false, false];
+
+
+
+
+  final Map<String, IconData> protectionIcons = {
+    'Protected': Icons.security,
+    'Unprotected': Icons.block,
+  };
+
+  final Map<String, IconData> orgasmIcons = {
+    'Yes': Icons.favorite,
+    'No': Icons.heart_broken,
+  };
+
+  final Map<String, IconData> timesIcons = {
+    '0': Icons.exposure_zero,
+    '1': Icons.looks_one,
+    '2': Icons.looks_two,
+    '3': Icons.looks_3,
+    '4': Icons.looks_4,
+    '5': Icons.looks_5,
+  };
+
+  String selectedUnit = 'kg';
+  double inputValue = 0.0;
+
+  void _showMoodDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          contentPadding: const EdgeInsets.all(16),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                 Text(
+                  'Select Mood',
+                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 20,
+                  runSpacing: 20,
+                  children: moods.map((mood) {
+                    return GestureDetector(
+                      onTap: () {
+                        selectedMood = mood["emoji"];
+                        Navigator.pop(context);
+                        setState(() {});
+                      },
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            mood["emoji"]!,
+                            style:  GoogleFonts.poppins(fontSize: 32),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            mood["label"]!,
+                            style: GoogleFonts.poppins(fontSize: 11),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showWaterSettingsDialog(BuildContext context, StateSetter parentSetState) {
+    final glassController = TextEditingController(text: glassMl.toString());
+    final targetController = TextEditingController(text: targetMl.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Water Settings', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: targetController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'Daily Target (ml)'),
+              ),
+              TextField(
+                controller: glassController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'Glass Size (ml)'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Cancel', style: GoogleFonts.poppins()),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFFD6BA2)),
+              onPressed: () {
+                int? newTarget = int.tryParse(targetController.text);
+                int? newGlass = int.tryParse(glassController.text);
+                if (newTarget != null && newGlass != null && newTarget > 0 && newGlass > 0) {
+                  parentSetState(() {
+                    targetMl = newTarget;
+                    glassMl = newGlass;
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('Save', style: GoogleFonts.poppins(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showInputDialog(BuildContext context, String type) {
+    TextEditingController controller =
+    TextEditingController(text: inputValue.toStringAsFixed(2));
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          contentPadding: const EdgeInsets.all(10),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Unit toggle
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0E0E0),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => setState(() => selectedUnit = type == 'Weight' ? 'kg' : '°C'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: selectedUnit == (type == 'Weight' ? 'kg' : '°C')
+                                  ? const Color(0xFFFDC1DC)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(type == 'Weight' ? 'kg' : '°C',
+                                style: const TextStyle(color: Colors.black)),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => setState(() => selectedUnit = type == 'Weight' ? 'lb' : '°F'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: selectedUnit == (type == 'Weight' ? 'lb' : '°F')
+                                  ? const Color(0xFFFDC1DC)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(type == 'Weight' ? 'lb' : '°F',
+                                style: const TextStyle(color: Colors.black)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // Value counter and manual entry
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle, color: Color(0xFFFD6BA2)),
+                        onPressed: () {
+                          setState(() {
+                            if (inputValue > 0) inputValue -= 0.5;
+                            controller.text = inputValue.toStringAsFixed(2);
+                          });
+                        },
+                      ),
+                      Container(
+                        width: 80,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        color: const Color(0xFFFEDFE8),
+                        child: TextField(
+                          controller: controller,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          textAlign: TextAlign.center,
+                          style:  GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
+                          decoration: const InputDecoration(border: InputBorder.none),
+                          onChanged: (value) {
+                            setState(() {
+                              inputValue = double.tryParse(value) ?? 0.0;
+                            });
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: Color(0xFFFD6BA2)),
+                        onPressed: () {
+                          setState(() {
+                            inputValue += 0.5;
+                            controller.text = inputValue.toStringAsFixed(2);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  // Confirm button
+                  SizedBox(
+                    height: 36,
+                    child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFFFD6BA2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+              if (type == 'Weight') {
+              selectedWeight = inputValue;
+              selectedWeightUnit = selectedUnit;
+              } else {
+              selectedTemperature = inputValue;
+              selectedTemperatureUnit = selectedUnit;
+              }
+              Navigator.pop(context);
+              },
+              child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+              child: Text("Save",style: GoogleFonts.poppins(color: Colors.white , fontSize: 12 , fontWeight: FontWeight.bold),)
+              ),
+              )
+                  ),
+
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+
 
   Future<void> _saveNote() async {
     final trimmedNote = _noteController.text.trim();
 
-    if (trimmedNote.isEmpty) {
+    if (trimmedNote.isEmpty &&
+        selectedMood == null &&
+        selectedWeight == null &&
+        selectedTemperature == null &&
+        selectedFlow == null &&
+        selectedIntercourse == null &&
+        selectedGlasses == 0 &&
+        symptomStars.every((star) => star == 0)) { // Also check symptoms
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a note before saving.'),
+          content: Text('Please enter some  data.'),
           backgroundColor: Color(0xFFFD6BA2),
         ),
       );
@@ -32,232 +361,879 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     String key = DateFormat('yyyy-MM-dd').format(selectedDate);
-    await prefs.setString('note_$key', trimmedNote);
 
-    // Show message, then navigate to calendar after a short delay
+    if (trimmedNote.isNotEmpty) {
+      await prefs.setString('note_$key', trimmedNote);
+    }
+    if (selectedMood != null) {
+      await prefs.setString('mood_$key', selectedMood!);
+    }
+    if (selectedFlow != null) {
+      await prefs.setInt('flow_$key', selectedFlow!);
+    }
+    if (selectedCondomOption.isNotEmpty) {
+      await prefs.setString('condom_$key', selectedCondomOption);
+    }
+    if (selectedOrgasm.isNotEmpty) {
+      await prefs.setString('orgasm_$key', selectedOrgasm);
+    }
+    await prefs.setInt('intercourseTimes_$key', intercourseTimes);
+
+    // Save weight and temperature
+    if (selectedWeight != null) {
+      await prefs.setDouble('weight_$key', selectedWeight!);
+    }
+    if (selectedTemperature != null) {
+      await prefs.setDouble('temperature_$key', selectedTemperature!);
+    }
+
+    // Save water intake details
+    await prefs.setInt('waterGlasses_$key', selectedGlasses);
+    await prefs.setInt('glassMl_$key', glassMl);
+    await prefs.setInt('targetMl_$key', targetMl);
+    await prefs.setInt('waterIntake_$key', selectedGlasses * glassMl);
+
+    // Save symptoms stars as JSON string
+    await prefs.setString('symptomStars_$key', jsonEncode(symptomStars));
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Note saved!'),
-        backgroundColor: Color(0xFFFD6BA2),
+      SnackBar(
+        content: Text('Note saved! Water: ${selectedGlasses * glassMl} ml'),
+        backgroundColor: const Color(0xFFFD6BA2),
       ),
     );
 
     _noteController.clear();
+    setState(() {
+      selectedMood = null;
+      selectedWeight = null;
+      selectedTemperature = null;
+      selectedGlasses = 0;
+      symptomStars = [0, 0, 0, 0];
+    });
 
     await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => MainScreen(initialTab: 2)), // 2 for Calendar
+      MaterialPageRoute(builder: (_) => MainScreen(initialTab: 2)),
           (route) => false,
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    const mainPink = Color(0xFFFD6BA2); // Same as bottom nav
-    final bgGradient = const LinearGradient(
-      colors: [Color(0xFFF9F3FF), Color(0xFFFDE5F2)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-    final cardGradient = LinearGradient(
-      colors: [mainPink.withOpacity(0.09), Colors.white],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F3FF),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          "Add Note",
-          style: TextStyle(
-            color: mainPink,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            letterSpacing: 1,
-          ),
-        ),
-        iconTheme: const IconThemeData(color: mainPink),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          )
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(gradient: bgGradient),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(22.0),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: cardGradient,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: mainPink.withOpacity(0.08),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Select Date",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: mainPink,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    InkWell(
-                      onTap: () async {
-                        final pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDate,
-                          firstDate: DateTime.now().subtract(const Duration(days: 90)),
-                          lastDate: DateTime.now().add(const Duration(days: 730)),
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme.light(
-                                  primary: mainPink,
-                                  onPrimary: Colors.white,
-                                  onSurface: mainPink, // Use mainPink directly
-                                ),
-                                textButtonTheme: TextButtonThemeData(
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: mainPink,
-                                  ),
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
-                        );
+  Future<void> _showIntercourseDialog(BuildContext context) async {
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        String selectedCondomOption = "";
+        String selectedOrgasm = "";
+        int intercourseTimes = 0;
 
-                        if (pickedDate != null) {
-                          setState(() {
-                            selectedDate = pickedDate;
-                          });
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: mainPink.withOpacity(0.17), width: 2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            contentPadding: const EdgeInsets.all(20),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Text("Condom option", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: ["Protected", "Unprotected"].map((option) {
+                      return GestureDetector(
+                        onTap: () {
+                          setStateDialog(() => selectedCondomOption = option);
+                        },
+                        child: Column(
                           children: [
-                            Text(
-                              DateFormat.yMMMMd().format(selectedDate),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: mainPink, // Use mainPink directly
-                                fontWeight: FontWeight.w500,
+                            CircleAvatar(
+                              backgroundColor: selectedCondomOption == option ? Color(0xFFFD6BA2) : Colors.grey[200],
+                              child: Icon(
+                                option == "Protected" ? Icons.shield : Icons.warning,
+                                color: selectedCondomOption == option ? Color(0xFFFD6BA2) : Colors.grey,
                               ),
                             ),
-                            const Icon(Icons.calendar_today, color: mainPink),
+                            const SizedBox(height: 4),
+                            Text(option),
                           ],
                         ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Text("Female orgasm", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: ["Yes", "No"].map((option) {
+                      return GestureDetector(
+                        onTap: () {
+                          setStateDialog(() => selectedOrgasm = option);
+                        },
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: selectedOrgasm == option ? Color(0xFFFD6BA2) : Colors.grey[200],
+                              child: Icon(
+                                option == "Yes" ? Icons.favorite : Icons.heart_broken,
+                                color: selectedOrgasm == option ? Color(0xFFFD6BA2) : Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(option),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Text("Times", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle, color: Color(0xFFFD6BA2)),
+                        onPressed: () {
+                          if (intercourseTimes > 0) {
+                            setStateDialog(() => intercourseTimes--);
+                          }
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Write Note",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: mainPink,
-                        letterSpacing: 0.5,
+                      Text(
+                        intercourseTimes.toString(),
+                        style:  GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: Color(0xFFFD6BA2)),
+                        onPressed: () {
+                          setStateDialog(() => intercourseTimes++);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFFD6BA2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    const SizedBox(height: 10),
-                    Container(
+                    onPressed: () {
+                      Navigator.pop(context, {
+                        "condom": selectedCondomOption,
+                        "orgasm": selectedOrgasm,
+                        "times": intercourseTimes,
+                      });
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                      child: Text("Save",style: GoogleFonts.poppins(color: Colors.white),)
+                    ),
+                  )
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+
+    // ✅ Update card or state when result is returned
+    if (result != null) {
+      setState(() {
+        selectedCondomOption = result["condom"];
+        selectedOrgasm = result["orgasm"];
+        intercourseTimes = result["times"];
+      });
+    }
+  }
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context).currentTheme;
+
+    return Scaffold(
+      backgroundColor: theme.backgroundColor,
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Image.asset(theme.backgroundImage, fit: BoxFit.cover),
+          ),
+          Column(
+            children: [
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    top: 4,
+                    bottom: 0,
+                    left: 10,
+                    right: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => MainScreen(initialTab: 0)),
+                          );
+                        },
+                        splashRadius: 24,
+                      ),
+                      Text(
+                        "Add note",
+                        style: GoogleFonts.poppins(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 20,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: Icon(
+                          Icons.notifications,
+                          color: theme.accentColor,
+                          size: 28,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RemindersScreen(),
+                            ),
+                          );
+                        },
+                        splashRadius: 28,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    children: [
+                      // ...rest of your widgets (start from "Select Date" and below)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Select Date",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.black,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // (keep the rest of your widgets unchanged)
+                      // ...
+
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now().subtract(
+                          const Duration(days: 90),
+                        ),
+                        lastDate: DateTime.now().add(const Duration(days: 730)),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.light(
+                                primary: Color(0xFFFD6BA2),
+                                onPrimary: Colors.white,
+                                onSurface: Color(0xFFFD6BA2),
+                              ),
+                              textButtonTheme: TextButtonThemeData(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Color(0xFFFD6BA2),
+                                ),
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (pickedDate != null) {
+                        setState(() => selectedDate = pickedDate);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: mainPink.withOpacity(0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat.yMMMMd().format(selectedDate),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.calendar_today,
+                            color: Colors.black,
                           ),
                         ],
                       ),
-                      child: TextField(
-                        controller: _noteController,
-                        maxLines: 6,
-                        style: const TextStyle(color: mainPink),
-                        decoration: InputDecoration(
-                          hintText: "Type your note here...",
-                          hintStyle: TextStyle(color: mainPink.withOpacity(0.3)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: mainPink.withOpacity(0.15), width: 2),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // 🌊 Flow Section
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Flow",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: mainPink.withOpacity(0.15), width: 2),
+                        ),
+                        Row(
+                          children: List.generate(4, (index) {
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  for (int i = 0; i < selectedFlowDrops.length; i++) {
+                                    selectedFlowDrops[i] = i <= index;
+                                  }
+                                  selectedFlow = index + 1; // 1 to 4 drops
+                                });
+                              },
+
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                                child: Icon(
+                                  Icons.water_drop,
+                                  size: 20,
+                                  color: selectedFlowDrops[index]
+                                      ? const Color(0xFFFD6BA2) // Selected = pink
+                                      : Colors.grey.shade300,   // Unselected = light grey
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+// 📝 Note Input
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Note",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: mainPink, width: 2),
+                        ),
+                        const SizedBox(height: 2),
+                        if (selectedMood != null)
+                          Text(
+                            selectedMood!,
+                            style: const TextStyle(fontSize: 28),
+                          ),
+                        TextField(
+                          controller: _noteController,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            hintText: "Write something",hintStyle: TextStyle(fontSize: 14),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+// ❤️ Intercourse Section
+                  GestureDetector(
+
+                    onTap: () => _showIntercourseDialog(context),
+                    child: Card(
+
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: ListTile(
+                        title: Text("Intercourse", style: GoogleFonts.poppins(fontSize : 14 ,fontWeight: FontWeight.w500)),
+                        subtitle: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Colors.pink[50],
+                                  child: Icon(
+                                    selectedCondomOption == "Protected" ? Icons.shield : Icons.warning,
+                                    color: selectedCondomOption == "Protected" ? Color(0xFFFD6BA2) : Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(selectedCondomOption),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Colors.pink[50],
+                                  child: Icon(
+                                    selectedOrgasm == "Yes" ? Icons.favorite : Icons.heart_broken,
+                                    color: selectedOrgasm == "Yes" ? Color(0xFFFD6BA2) : Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(selectedOrgasm),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Colors.pink[50],
+                                  child: Text(
+                                    intercourseTimes.toString(),
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text("Times" ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // 😊 Moods
+                  // 😊 Moods - Preview with 4 emojis and dialog button
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Moods",
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ...moods.take(4).map((mood) {
+                                  return GestureDetector(
+                                    onTap: () => _showMoodDialog(context),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          selectedMood == mood["emoji"] ? selectedMood! : mood["emoji"]!,
+                                          style: TextStyle(
+                                            fontSize: 28,
+                                            backgroundColor: selectedMood == mood["emoji"]
+                                                ? const Color(0xFFFD6BA2).withOpacity(0.2)
+                                                : Colors.transparent,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          mood["label"]!,
+                                          style: GoogleFonts.poppins(fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                const SizedBox(width: 2), // Spacing between emojis and chevron
+                                // Chevron icon at the end
+                                IconButton(
+                                  icon: const Icon(Icons.chevron_right),
+                                  onPressed: () => _showMoodDialog(context),
+                                  padding: EdgeInsets.only(right: 6,bottom: 12),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+SizedBox(height: 10),
+
+
+                      // Place this inside your AddNoteScreen build method where you want the symptoms card
+                      //Symptoms card
+                      // Place this where you want the symptoms card in your build method
+
+                      // Place this inside your build method where you want the symptoms card
+
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 12,
+                              color: Colors.black.withOpacity(0.06),
+                            )
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Symptoms",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: List.generate(4, (i) {
+                                final isPink = symptomStars[i] > 0;
+                                return Expanded(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: isPink ? Color(0xFFFD6BA2) : Colors.red,
+                                            width: 2,
+                                          ),
+                                          color: Colors.white,
+                                        ),
+                                        child: Icon(
+                                          symptomIcons[i],
+                                          color: Color(0xFFFD6BA2),
+                                          size: 22,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: List.generate(4, (star) => GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              symptomStars[i] = star + 1;
+                                            });
+                                          },
+                                          child: Icon(
+                                            Icons.star,
+                                            size: 14,
+                                            color: star < symptomStars[i]
+                                                ? Color(0xFFFD6BA2)
+                                                : Colors.grey,
+                                          ),
+                                        )),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        symptomNames[i],
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 11,
+                                          color: Colors.black87,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 10),
+
+                      // Weight Card
+                      GestureDetector(
+                        onTap: () => showInputDialog(context, 'Weight'),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                               Text(
+                                "Weight",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Row(
+                                children: const [
+                                  Icon(Icons.monitor_weight, color: Color(0xFF6D5DF6)),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.chevron_right, color: Colors.black45),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                  // Temperature card
+                  GestureDetector(
+                    onTap: () => showInputDialog(context, 'Temperature'),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                           Text(
+                            "Temperature",
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Row(
+                            children: const [
+                              Icon(Icons.thermostat, color: Color(0xFFFD6BA2)),
+                              SizedBox(width: 8),
+                              Icon(Icons.chevron_right, color: Colors.black45),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                      // water card
+                      GestureDetector(
+                        onTap: () => _showWaterSettingsDialog(context, setState),
+                        child: StatefulBuilder(
+                          builder: (context, setState) {
+                            int maxGlasses = 20;
+                            int totalGlasses = (selectedGlasses > 8) ? selectedGlasses : 8;
+
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.blueAccent.withOpacity(0.05),
+                                    blurRadius: 10,
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Header Row
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "Drink water",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  // Progress Row
+                                  Row(
+                                    children: [
+                                      Text(
+                                        "${selectedGlasses * glassMl}",
+                                        style: GoogleFonts.poppins(
+                                          color: const Color(0xFF6B46FD),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      Text(
+                                        "/ $targetMl ml",
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.black54,
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // Glasses grid
+                                  SizedBox(
+                                    height: ((totalGlasses / 4).ceil() * 120).toDouble(),
+                                    child: GridView.builder(
+                                      itemCount: totalGlasses,
+                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 4,
+                                        mainAxisSpacing: 6,
+                                        crossAxisSpacing: 6,
+                                        childAspectRatio: 0.7,
+                                      ),
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemBuilder: (context, index) {
+                                        bool glassSelected = index < selectedGlasses;
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              if (index == totalGlasses - 1 && totalGlasses < maxGlasses) {
+                                                selectedGlasses++;
+                                              } else {
+                                                selectedGlasses = index + 1;
+                                              }
+                                            });
+                                          },
+                                          child: Column(
+                                            children: [
+                                              Container(
+                                                width: 35,
+                                                height: 45,
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    colors: [
+                                                      Color(0xFFB8E8FF),
+                                                      Color(0xFF93C8EF),
+                                                    ],
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: Center(
+                                                  child: glassSelected
+                                                      ? Image.asset('assets/img.png', width: 26, height: 26)
+                                                      : const Icon(Icons.add, color: Color(0xFF6B46FD), size: 20),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "$glassMl ml",
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  color: Colors.black54,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                  SizedBox(height: 2),
+
+
+                  // 💾 Save Button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 50),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveNote,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFFD6BA2),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Text(
+                          'Save',
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 26),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _saveNote,
-                        icon: const Icon(Icons.save, color: Colors.white),
-                        label: const Text(
-                          "Save Note",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: mainPink,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 3,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
           ),
-        ),
+        ],
       ),
-    );
+            ],),);
   }
 }
+
+

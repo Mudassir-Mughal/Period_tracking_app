@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'bottomnaviagtor.dart';
 import 'home.dart';
+import 'dart:convert'; // Added for json.encode
 
 class OnboardStep3 extends StatefulWidget {
   final int periodLength;
@@ -36,11 +37,17 @@ class _OnboardStep3State extends State<OnboardStep3> {
     super.initState();
 
     final now = DateTime.now();
-    years = List.generate(3, (index) => now.year - 2 + index);
+    years = List.generate(2, (index) => now.year - 1 + index);
 
-    _monthController = FixedExtentScrollController(initialItem: selectedDate.month - 1);
-    _dayController = FixedExtentScrollController(initialItem: selectedDate.day - 1);
-    _yearController = FixedExtentScrollController(initialItem: years.indexOf(selectedDate.year));
+    _monthController = FixedExtentScrollController(
+      initialItem: selectedDate.month - 1,
+    );
+    _dayController = FixedExtentScrollController(
+      initialItem: selectedDate.day - 1,
+    );
+    _yearController = FixedExtentScrollController(
+      initialItem: years.indexOf(selectedDate.year),
+    );
   }
 
   @override
@@ -69,6 +76,42 @@ class _OnboardStep3State extends State<OnboardStep3> {
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     }
+  }
+
+  Future<void> _savePeriodDate(DateTime selectedDate) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('lastPeriodDate', selectedDate.toIso8601String());
+
+    // Calculate and save cycle history
+    final cycleLength = prefs.getInt('cycleLength') ?? 28;
+    final now = DateTime.now();
+    List<Map<String, dynamic>> cycleHistory = [];
+
+    DateTime cycleStart = selectedDate;
+    while (cycleStart.isBefore(now)) {
+      // Calculate cycle end date
+      final cycleEnd = cycleStart.add(Duration(days: cycleLength));
+
+      // Only add completed cycles
+      if (cycleEnd.isBefore(now)) {
+        cycleHistory.add({
+          'date': cycleStart.toIso8601String(),
+          'length': cycleLength,
+        });
+      }
+
+      // Move to next cycle
+      cycleStart = cycleStart.add(Duration(days: cycleLength));
+    }
+
+    // Save cycle history
+    await prefs.setString('cycleHistory', json.encode(cycleHistory));
+
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MainScreen()),
+    );
   }
 
   Widget _buildPicker({
@@ -101,15 +144,21 @@ class _OnboardStep3State extends State<OnboardStep3> {
               // Clamp month and day for new year if needed
               if (year == now.year && month > now.month) month = now.month;
               int daysInSelectedMonth = daysInMonth(year, month);
-              if (year == now.year && month == now.month && day > now.day) day = now.day;
+              if (year == now.year && month == now.month && day > now.day)
+                day = now.day;
               if (day > daysInSelectedMonth) day = daysInSelectedMonth;
             } else if (controller == _monthController) {
-              month = (year == now.year && index + 1 > now.month) ? now.month : index + 1;
+              month = (year == now.year && index + 1 > now.month)
+                  ? now.month
+                  : index + 1;
               int daysInSelectedMonth = daysInMonth(year, month);
-              if (year == now.year && month == now.month && day > now.day) day = now.day;
+              if (year == now.year && month == now.month && day > now.day)
+                day = now.day;
               if (day > daysInSelectedMonth) day = daysInSelectedMonth;
             } else if (controller == _dayController) {
-              int maxDay = (year == now.year && month == now.month) ? now.day : daysInMonth(year, month);
+              int maxDay = (year == now.year && month == now.month)
+                  ? now.day
+                  : daysInMonth(year, month);
               day = (index + 1 > maxDay) ? maxDay : index + 1;
             }
 
@@ -121,7 +170,8 @@ class _OnboardStep3State extends State<OnboardStep3> {
             selectedDate = newDate;
 
             // Sync pickers with the new date
-            if (_yearController.selectedItem != years.indexOf(selectedDate.year)) {
+            if (_yearController.selectedItem !=
+                years.indexOf(selectedDate.year)) {
               _yearController.jumpToItem(years.indexOf(selectedDate.year));
             }
             if (_monthController.selectedItem != selectedDate.month - 1) {
@@ -142,9 +192,9 @@ class _OnboardStep3State extends State<OnboardStep3> {
                 height: 48,
                 decoration: isSelected
                     ? BoxDecoration(
-                  color: primaryPink.withOpacity(0.32),
-                  borderRadius: BorderRadius.circular(14),
-                )
+                        color: primaryPink.withOpacity(0.32),
+                        borderRadius: BorderRadius.circular(14),
+                      )
                     : null,
                 alignment: Alignment.center,
                 child: itemBuilder(idx, isSelected),
@@ -172,7 +222,7 @@ class _OnboardStep3State extends State<OnboardStep3> {
     int maxMonth = (selectedYear == now.year) ? now.month : 12;
     final List<String> shownMonths = List.generate(
       maxMonth,
-          (i) => DateFormat('MMM').format(DateTime(0, i + 1)),
+      (i) => DateFormat('MMM').format(DateTime(0, i + 1)),
     );
     int monthIdx = (selectedMonth - 1).clamp(0, shownMonths.length - 1);
 
@@ -197,7 +247,11 @@ class _OnboardStep3State extends State<OnboardStep3> {
                   children: [
                     // Back button
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 22),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.black87,
+
+                      ),
                       splashRadius: 22,
                       onPressed: () {
                         Navigator.of(context).pop();
@@ -231,7 +285,7 @@ class _OnboardStep3State extends State<OnboardStep3> {
                 child: Text(
                   "What’s the start date of your\nLast period?",
                   style: TextStyle(
-                    fontSize: 19,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: primaryPink,
                   ),
@@ -257,8 +311,10 @@ class _OnboardStep3State extends State<OnboardStep3> {
                         itemBuilder: (idx, isSelected) => Text(
                           shownMonths[idx],
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 26,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            fontSize: 20,
                             color: Colors.black,
                             letterSpacing: 1,
                           ),
@@ -273,8 +329,10 @@ class _OnboardStep3State extends State<OnboardStep3> {
                         itemBuilder: (idx, isSelected) => Text(
                           (idx + 1).toString().padLeft(2, '0'),
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 26,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            fontSize: 20,
                             color: Colors.black,
                             letterSpacing: 1,
                           ),
@@ -289,8 +347,10 @@ class _OnboardStep3State extends State<OnboardStep3> {
                         itemBuilder: (idx, isSelected) => Text(
                           shownYears[idx].toString(),
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 26,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            fontSize: 20,
                             color: Colors.black,
                             letterSpacing: 1,
                           ),
@@ -308,7 +368,7 @@ class _OnboardStep3State extends State<OnboardStep3> {
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: saveUserData,
+                    onPressed: () => _savePeriodDate(selectedDate),
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
                       shape: RoundedRectangleBorder(

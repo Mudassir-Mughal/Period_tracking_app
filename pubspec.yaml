@@ -40,6 +40,11 @@ dependencies:
   awesome_notifications: ^0.10.1
   device_info_plus: ^11.0.1
   google_fonts: ^6.0.0
+  permission_handler: ^11.2.0
+  pdf: ^3.8.0
+  printing: ^5.6.0
+  share_plus: ^10.0.0
+  url_launcher: ^6.2.5
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -49,6 +54,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.12.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -56,6 +62,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+flutter_icons:
+  android: true
+  image_path: "assets/appicon.png"
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -65,7 +75,17 @@ flutter:
   assets:
     - assets/image2.png
     - assets/appicon.png
-    - assets/vector15.png
+    - assets/homeicon.png
+    - assets/cyclephase1.png
+    - assets/cyclephase2.png
+    - assets/cyclephase3.png
+    - assets/Theme 1.png
+    - assets/Theme 2.png
+    - assets/Theme 3.png
+    - assets/Theme 4.png
+    - assets/Theme 5.png
+    - assets/Theme 6.png
+    - assets/img.png
 
 
 

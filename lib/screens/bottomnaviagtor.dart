@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'Calender.dart';
+import 'Report.dart';
 import 'home.dart';
 import 'addnote.dart';
-import 'Calender.dart'; // Ensure this matches your file/class name
+ // Ensure this matches your file/class name
 
 class MainScreen extends StatefulWidget {
   final int initialTab;
@@ -16,8 +18,10 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _screens = [
     HomeScreen(),
+    Calender(),
     AddNoteScreen(),
-    Calender(), // Make sure your class name matches this
+    Report()
+     // Make sure your class name matches this
   ];
 
   @override
@@ -29,22 +33,27 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: "Add"),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Calendar"),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box_rounded), label: "Add"),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Report"),
+
         ],
-        selectedItemColor: Colors.pink,
+        selectedItemColor: Color(0xFFFD6BA2),
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
       ),
     );
   }
 }
+
