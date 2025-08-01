@@ -193,18 +193,20 @@ class _CalenderState extends State<Calender> with WidgetsBindingObserver {
       }
       // Symptoms
       if (symptomStars.isNotEmpty && symptomStars.any((s) => s > 0)) {
-        final symptomNames = ['Cravings', 'Anxiety', 'Headache', 'Stress'];
-        final symptomIcons = [
-          Icons.cake_outlined, // Cravings
-          Icons.trending_up,   // Anxiety
-          Icons.gavel,         // Headache
-          Icons.fitness_center // Stress
+        final symptomNames = ['backpain', 'Anxiety', 'Headache', 'Cravings'];
+
+        // Update these paths to match your actual assets!
+        final symptomAssetIcons = [
+          "assets/backpain.png",
+          "assets/Anxiety.png",
+          "assets/Headache.png",
+          "assets/cravings.png",
         ];
         for (int j = 0; j < symptomStars.length; j++) {
           if (symptomStars[j] > 0) {
             right.add({
               "type": "symptom",
-              "icon": symptomIcons[j],
+              "icon": symptomAssetIcons[j], // <-- use asset path instead of IconData
               "label": symptomNames[j],
               "stars": symptomStars[j]
             });
@@ -310,6 +312,8 @@ class _CalenderState extends State<Calender> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     const mainPink = Color(0xFFFD6BA2);
+    final double deviceWidth = MediaQuery.of(context).size.width;
+    final double horizontalPadding = 16.0; // Consistent margin for all devices
     final List<String> events = _selectedDay != null
         ? _getEventsForDay(_selectedDay!)
         : <String>[];
@@ -408,340 +412,338 @@ class _CalenderState extends State<Calender> with WidgetsBindingObserver {
                 ),
               ),
 
-              // Month selector (fixed)
+              // Month selector AND weekday row in same (padded) container
               Padding(
-                padding: const EdgeInsets.only(
-                  top: 0,
-                  left: 12,
-                  right: 12,
-                  bottom: 0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.chevron_left,
-                            color: mainPink,
-                            size: 36,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _focusedDay = DateTime(
-                                _focusedDay.year,
-                                _focusedDay.month - 1,
-                                1,
-                              );
-                            });
-                          },
-                        ),
-                      ),
-                    ),
+                    // Month selector row with left/right chevrons aligned with calendar columns
                     Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          color: Color(0xFF232323),
-                          size: 19,
+                        // Left icon aligned to first grid column
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.chevron_left,
+                                color: mainPink,
+                                size: 36,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _focusedDay = DateTime(
+                                    _focusedDay.year,
+                                    _focusedDay.month - 1,
+                                    1,
+                                  );
+                                });
+                              },
+                            ),
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          DateFormat.yMMMM().format(_focusedDay),
-                          style: GoogleFonts.poppins(
-                            color: Color(0xFF232323),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                        // Month name with icon, spans 5 columns
+                        Expanded(
+                          flex: 5,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                color: Color(0xFF232323),
+                                size: 19,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                DateFormat.yMMMM().format(_focusedDay),
+                                style: GoogleFonts.poppins(
+                                  color: Color(0xFF232323),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Right icon aligned to last grid column
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.chevron_right,
+                                color: mainPink,
+                                size: 36,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _focusedDay = DateTime(
+                                    _focusedDay.year,
+                                    _focusedDay.month + 1,
+                                    1,
+                                  );
+                                });
+                              },
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.chevron_right,
-                            color: mainPink,
-                            size: 36,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _focusedDay = DateTime(
-                                _focusedDay.year,
-                                _focusedDay.month + 1,
-                                1,
-                              );
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Day names row (fixed)
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 24,
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    for (final day in [
-                      "Sun",
-                      "Mon",
-                      "Tue",
-                      "Wed",
-                      "Thu",
-                      "Fri",
-                      "Sat",
-                    ])
-                      SizedBox(
-                        width: 44,
-                        child: Center(
-                          child: Text(
-                            day,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.normal,
-                              color: Colors.black,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // Calendar (fixed)
-              Container(
-                width: 308,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                  border: Border.all(color: Color(0xFFD9D9D9), width: 1.2),
-                ),
-                child: TableCalendar(
-                  daysOfWeekVisible: false,
-                  daysOfWeekHeight: 0,
-                  firstDay: DateTime.now().subtract(const Duration(days: 90)),
-                  lastDay: DateTime.now().add(const Duration(days: 365 * 2)),
-                  focusedDay: _focusedDay,
-                  selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
-                  onDaySelected: (selectedDay, focusedDay) async {// Ensure data is always up to date!
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = selectedDay;
-                    });
-                  },
-                  calendarFormat: CalendarFormat.month,
-                  availableGestures: AvailableGestures.horizontalSwipe,
-                  headerVisible: false,
-                  rowHeight: 44,
-                  calendarBuilders: CalendarBuilders(
-                    defaultBuilder: (context, day, _) {
-                      final color = _customCellColor(day);
-                      final hasNote = _notes.containsKey(DateTime(day.year, day.month, day.day));
-
-                      // --- Pregnancy day number as you want (pink bg, white, font size 10, bold) ---
-                      Widget pregnancyDayNumber = SizedBox.shrink();
-                      int? pregDay;
-                      if (isPregnancyMode && pregnancyStartDate != null) {
-                        pregDay = day.difference(pregnancyStartDate!).inDays ;
-                        if (pregDay < 1 || pregDay > 280) pregDay = null;
-                      }
-                      if (pregDay != null) {
-                        pregnancyDayNumber = Positioned(
-                          top: 3,
-                          right: 3,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFFD6BA2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '$pregDay',
-                              style: GoogleFonts.poppins(
-                                fontSize: 6,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      // --- END ---
-
-                      // Note icon always, left in pregnancy mode
-                      Widget noteIcon = hasNote
-                          ? Positioned(
-                        top: 2,
-                        left: isPregnancyMode ? 2 : null,
-                        right: isPregnancyMode ? null : 2,
-                        child: Icon(
-                          Icons.sticky_note_2_rounded,
-                          color: Color(0xFFB35AFF),
-                          size: 14,
-                        ),
-                      )
-                          : SizedBox.shrink();
-
-                      return Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: color,
-                              border: Border.all(
-                                color: Color(0xFFD9D9D9),
-                                width: 1,
-                              ),
-                            ),
-                            width: 44,
-                            height: 44,
+                    // Day names row, perfectly aligned
+                    Row(
+                      children: [
+                        for (final day in [
+                          "Sun",
+                          "Mon",
+                          "Tue",
+                          "Wed",
+                          "Thu",
+                          "Fri",
+                          "Sat",
+                        ])
+                          Expanded(
                             child: Center(
                               child: Text(
-                                '${day.day}',
+                                day,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.black,
                                   fontWeight: FontWeight.normal,
+                                  color: Colors.black,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
                           ),
-                          // Always show note icon if note exists
-                          noteIcon,
-                          // Pregnancy day number if in pregnancy mode and within 1-280
-                          if (pregDay != null) pregnancyDayNumber,
-                          // Cycle symbols if not pregnancy mode
-                          if (!isPregnancyMode) _buildCellSymbols(day),
-                        ],
-                      );
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Calendar (responsive, padded)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Container(
+                  width: double.infinity, // fills the available width inside padding
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: Border.all(color: Color(0xFFD9D9D9), width: 1.2),
+                  ),
+                  child: TableCalendar(
+                    daysOfWeekVisible: false,
+                    daysOfWeekHeight: 0,
+                    firstDay: DateTime.now().subtract(const Duration(days: 90)),
+                    lastDay: DateTime.now().add(const Duration(days: 365 * 2)),
+                    focusedDay: _focusedDay,
+                    selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+                    onDaySelected: (selectedDay, focusedDay) async {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = selectedDay;
+                      });
                     },
-                    selectedBuilder: (context, day, _) {
-                      final color = _customCellColor(day);
-                      final hasNote = _notes.containsKey(DateTime(day.year, day.month, day.day));
+                    calendarFormat: CalendarFormat.month,
+                    availableGestures: AvailableGestures.horizontalSwipe,
+                    headerVisible: false,
+                    rowHeight: (deviceWidth - 2 * horizontalPadding) / 7, // squares and always fits screen with padding
+                    calendarBuilders: CalendarBuilders(
+                      defaultBuilder: (context, day, _) {
+                        final color = _customCellColor(day);
+                        final hasNote = _notes.containsKey(DateTime(day.year, day.month, day.day));
 
-                      // --- Pregnancy day number as you want (pink bg, white, font size 10, bold) ---
-                      Widget pregnancyDayNumber = SizedBox.shrink();
-                      int? pregDay;
-                      if (isPregnancyMode && pregnancyStartDate != null) {
-                        pregDay = day.difference(pregnancyStartDate!).inDays ;
-                        if (pregDay < 1 || pregDay > 280) pregDay = null;
-                      }
-                      if (pregDay != null) {
-                        pregnancyDayNumber = Positioned(
-                          top: 3,
-                          right: 3,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFFD6BA2),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '$pregDay',
-                              style: GoogleFonts.poppins(
-                                fontSize: 6,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                        // --- Pregnancy day number as you want (pink bg, white, font size 10, bold) ---
+                        Widget pregnancyDayNumber = SizedBox.shrink();
+                        int? pregDay;
+                        if (isPregnancyMode && pregnancyStartDate != null) {
+                          pregDay = day.difference(pregnancyStartDate!).inDays ;
+                          if (pregDay < 1 || pregDay > 280) pregDay = null;
+                        }
+                        if (pregDay != null) {
+                          pregnancyDayNumber = Positioned(
+                            top: 3,
+                            right: 3,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFFD6BA2),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                            ),
-                          ),
-                        );
-                      }
-                      // --- END ---
-
-                      // Note icon always, left in pregnancy mode
-                      Widget noteIcon = hasNote
-                          ? Positioned(
-                        top: 2,
-                        left: isPregnancyMode ? 2 : null,
-                        right: isPregnancyMode ? null : 2,
-                        child: Icon(
-                          Icons.sticky_note_2_rounded,
-                          color: Color(0xFFB35AFF),
-                          size: 14,
-                        ),
-                      )
-                          : SizedBox.shrink();
-
-                      return Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: color,
-                              border: Border.all(color: mainPink, width: 2),
-                            ),
-                            width: 44,
-                            height: 44,
-                            child: Center(
                               child: Text(
-                                '${day.day}',
+                                '$pregDay',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: mainPink,
+                                  fontSize: 6,
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
+                          );
+                        }
+                        // --- END ---
+
+                        // Note icon always, left in pregnancy mode
+                        Widget noteIcon = hasNote
+                            ? Positioned(
+                          top: 2,
+                          left: isPregnancyMode ? 2 : null,
+                          right: isPregnancyMode ? null : 2,
+                          child: Icon(
+                            Icons.sticky_note_2_rounded,
+                            color: Color(0xFFB35AFF),
+                            size: 14,
                           ),
-                          noteIcon,
-                          if (pregDay != null) pregnancyDayNumber,
-                          if (!isPregnancyMode) _buildCellSymbols(day),
-                        ],
-                      );
-                    },
-                  ),
-                  calendarStyle: CalendarStyle(
-                    isTodayHighlighted: false,
-                    tablePadding: EdgeInsets.zero,
-                    cellMargin: EdgeInsets.zero,
-                    cellPadding: EdgeInsets.zero,
-                    selectedDecoration: const BoxDecoration(
-                      color: Colors.transparent,
+                        )
+                            : SizedBox.shrink();
+
+                        return Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: color,
+                                border: Border.all(
+                                  color: Color(0xFFD9D9D9),
+                                  width: 1,
+                                ),
+                              ),
+                              width: (deviceWidth - 2 * horizontalPadding) / 7,
+                              height: (deviceWidth - 2 * horizontalPadding) / 7,
+                              child: Center(
+                                child: Text(
+                                  '${day.day}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Always show note icon if note exists
+                            noteIcon,
+                            // Pregnancy day number if in pregnancy mode and within 1-280
+                            if (pregDay != null) pregnancyDayNumber,
+                            // Cycle symbols if not isPregnancyMode
+                            if (!isPregnancyMode) _buildCellSymbols(day),
+                          ],
+                        );
+                      },
+                      selectedBuilder: (context, day, _) {
+                        final color = _customCellColor(day);
+                        final hasNote = _notes.containsKey(DateTime(day.year, day.month, day.day));
+
+                        // --- Pregnancy day number as you want (pink bg, white, font size 10, bold) ---
+                        Widget pregnancyDayNumber = SizedBox.shrink();
+                        int? pregDay;
+                        if (isPregnancyMode && pregnancyStartDate != null) {
+                          pregDay = day.difference(pregnancyStartDate!).inDays ;
+                          if (pregDay < 1 || pregDay > 280) pregDay = null;
+                        }
+                        if (pregDay != null) {
+                          pregnancyDayNumber = Positioned(
+                            top: 3,
+                            right: 3,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFFD6BA2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '$pregDay',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 6,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        // --- END ---
+
+                        // Note icon always, left in pregnancy mode
+                        Widget noteIcon = hasNote
+                            ? Positioned(
+                          top: 2,
+                          left: isPregnancyMode ? 2 : null,
+                          right: isPregnancyMode ? null : 2,
+                          child: Icon(
+                            Icons.sticky_note_2_rounded,
+                            color: Color(0xFFB35AFF),
+                            size: 14,
+                          ),
+                        )
+                            : SizedBox.shrink();
+
+                        return Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: color,
+                                border: Border.all(color: mainPink, width: 2),
+                              ),
+                              width: (deviceWidth - 2 * horizontalPadding) / 7,
+                              height: (deviceWidth - 2 * horizontalPadding) / 7,
+                              child: Center(
+                                child: Text(
+                                  '${day.day}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: mainPink,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            noteIcon,
+                            if (pregDay != null) pregnancyDayNumber,
+                            if (!isPregnancyMode) _buildCellSymbols(day),
+                          ],
+                        );
+                      },
                     ),
-                    selectedTextStyle: GoogleFonts.poppins(
-                      color: mainPink,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                    defaultTextStyle: GoogleFonts.poppins(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    outsideTextStyle: GoogleFonts.poppins(
-                      color: Color(0xFFC5C5C5),
-                      fontSize: 14,
-                    ),
-                    weekendTextStyle: GoogleFonts.poppins(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    todayDecoration: const BoxDecoration(
-                      color: Colors.transparent,
+                    calendarStyle: CalendarStyle(
+                      isTodayHighlighted: false,
+                      tablePadding: EdgeInsets.zero,
+                      cellMargin: EdgeInsets.zero,
+                      cellPadding: EdgeInsets.zero,
+                      selectedDecoration: const BoxDecoration(
+                        color: Colors.transparent,
+                      ),
+                      selectedTextStyle: GoogleFonts.poppins(
+                        color: mainPink,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      defaultTextStyle: GoogleFonts.poppins(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      outsideTextStyle: GoogleFonts.poppins(
+                        color: Color(0xFFC5C5C5),
+                        fontSize: 14,
+                      ),
+                      weekendTextStyle: GoogleFonts.poppins(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      todayDecoration: const BoxDecoration(
+                        color: Colors.transparent,
+                      ),
                     ),
                   ),
                 ),
               ),
               SizedBox(height: 12),
-              // Show Pregnancy info below calendar when ON
 
               // Edit period date button (fixed)
               if (!isPregnancyMode)
@@ -785,363 +787,414 @@ class _CalenderState extends State<Calender> with WidgetsBindingObserver {
                   child: Column(
                     children: [
                       if (_selectedDay != null)
-                        Container(
-                          width: 308,
-                          margin: const EdgeInsets.only(top: 0, bottom: 16),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                            border: Border.all(
-                              color: Color(0xFFD9D9D9),
-                              width: 1.2,
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(top: 0, bottom: 16),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Row for date and edit button only
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    DateFormat.MMMd().format(_selectedDay!),
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15,
-                                      color: Colors.black,
-                                      letterSpacing: 0.2,
-                                    ),
-                                  ),
-                                  if (selectedNote != null)
-                                    IconButton(
-                                      icon: Icon(Icons.edit, color: mainPink, size: 20),
-                                      onPressed: () {
-                                        String? noteText;
-                                        if (selectedNote != null && selectedNote['left'] != null) {
-                                          for (final item in selectedNote['left']) {
-                                            if (item['type'] == 'note') {
-                                              noteText = item['text'];
-                                              break;
-                                            }
-                                          }
-                                        }
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => AddNoteScreen(
-                                              date: _selectedDay!,
-                                              existingNote: noteText,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                ],
-                              ),
-                              // Pregnancy selected day info
-                              if (isPregnancyMode && pregnancyStartDate != null) ...[
-                                Builder(builder: (context) {
-                                  int selPregDay = _selectedDay!.difference(pregnancyStartDate!).inDays ;
-                                  if (selPregDay >= 1 && selPregDay <= 280) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 6, bottom: 4),
-                                      child: Text(
-                                        "Pregnancy Day $selPregDay",
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.pink,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  return SizedBox.shrink();
-                                }),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
                               ],
-                              // Cycle day below, as a separate widget
-                              if (!isPregnancyMode && cycleDayText.isNotEmpty)
-                                Text(
-                                  cycleDayText,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.grey[700],
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    height: 0.5,
-                                  ),
-                                ),
-                              if (!isPregnancyMode && _eventTypeText(events).isNotEmpty)
-                                Text(
-                                  _eventTypeText(events),
-                                  style: GoogleFonts.poppins(
-                                    color: mainPink,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.7,
-                                  ),
-                                ),
-                              if (!isPregnancyMode && annotateText.isNotEmpty)
+                              border: Border.all(
+                                color: Color(0xFFD9D9D9),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Row for date and edit button only
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        color: annotateColor,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      margin: const EdgeInsets.only(right: 4),
-                                    ),
                                     Text(
-                                      annotateText,
+                                      DateFormat.MMMd().format(_selectedDay!),
                                       style: GoogleFonts.poppins(
-                                        color: Colors.grey[800],
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w400,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color: Colors.black,
+                                          letterSpacing: 0.2,
+                                          height: 2
                                       ),
                                     ),
+
+                                    if (selectedNote != null)
+                                      IconButton(
+                                        icon: Icon(Icons.edit, color: mainPink, size: 20),
+                                        onPressed: () {
+                                          String? noteText;
+                                          if (selectedNote != null && selectedNote['left'] != null) {
+                                            for (final item in selectedNote['left']) {
+                                              if (item['type'] == 'note') {
+                                                noteText = item['text'];
+                                                break;
+                                              }
+                                            }
+                                          }
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => AddNoteScreen(
+                                                date: _selectedDay!,
+                                                existingNote: noteText,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                   ],
                                 ),
-                              // Two column note display
-                              if (selectedNote != null)
-                                Builder(
-                                    builder: (context) {
-                                      final noteData = selectedNote;
-                                      final left = noteData?['left'] ?? [];
-                                      final right = noteData?['right'] ?? [];
-                                      if (left.isEmpty && right.isEmpty) {
-                                        return SizedBox.shrink();
-                                      }
-                                      if (left.isNotEmpty && right.isNotEmpty) {
-                                        return Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            // Left Side: Mood, Note, Intercourse, etc
-                                            Expanded(
-                                              flex: 2,
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: left.map<Widget>((item) {
-                                                  Color? dotColor;
-                                                  if (item['type'] == 'note') dotColor = Colors.blue;
-                                                  if (item['type'] == 'intercourse' || item['type'] == 'condom' || item['type'] == 'orgasm') dotColor = Colors.pink;
-                                                  if (dotColor != null) {
-                                                    return Row(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Container(
-                                                          width: 10,
-                                                          height: 14,
-                                                          decoration: BoxDecoration(
-                                                            color: dotColor,
-                                                            shape: BoxShape.circle,
+                                // Pregnancy selected day info
+                                if (isPregnancyMode && pregnancyStartDate != null) ...[
+                                  Builder(builder: (context) {
+                                    int selPregDay = _selectedDay!.difference(pregnancyStartDate!).inDays ;
+                                    if (selPregDay >= 1 && selPregDay <= 280) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 0, bottom: 4),
+                                        child: Text(
+                                          "Pregnancy Day $selPregDay",
+                                          style: GoogleFonts.poppins(
+                                            color: Colors.pink,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return SizedBox.shrink();
+                                  }),
+                                ],
+                                // Cycle day below, as a separate widget
+                                if (!isPregnancyMode && cycleDayText.isNotEmpty)
+                                  Text(
+                                    cycleDayText,
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.grey[700],
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      height:1,
+                                    ),
+                                  ),
+                                if (!isPregnancyMode && _eventTypeText(events).isNotEmpty)
+                                  Text(
+                                    _eventTypeText(events),
+                                    style: GoogleFonts.poppins(
+                                      color: mainPink,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.7,
+                                    ),
+                                  ),
+                                if (!isPregnancyMode && annotateText.isNotEmpty)
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          color: annotateColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        margin: const EdgeInsets.only(right: 4),
+                                      ),
+                                      Text(
+                                        annotateText,
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.grey[800],
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                // Two column note display
+                                if (selectedNote != null)
+                                  Builder(
+                                      builder: (context) {
+                                        final noteData = selectedNote;
+                                        final left = noteData?['left'] ?? [];
+                                        final right = noteData?['right'] ?? [];
+                                        if (left.isEmpty && right.isEmpty) {
+                                          return SizedBox.shrink();
+                                        }
+                                        if (left.isNotEmpty && right.isNotEmpty) {
+                                          return Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              // Left Side: Mood, Note, Intercourse, etc
+                                              Expanded(
+                                                flex: 2,
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: left.map<Widget>((item) {
+                                                    Color? dotColor;
+                                                    if (item['type'] == 'note') dotColor = Colors.blue;
+                                                    if (item['type'] == 'intercourse' || item['type'] == 'condom' || item['type'] == 'orgasm') dotColor = Colors.pink;
+                                                    if (dotColor != null) {
+                                                      return Row(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Container(
+                                                            width: 10,
+                                                            height: 10,
+                                                            decoration: BoxDecoration(
+                                                              color: dotColor,
+                                                              shape: BoxShape.circle,
+                                                            ),
+                                                            margin: const EdgeInsets.only(right: 4, top:4),
                                                           ),
-                                                          margin: const EdgeInsets.only(right: 4, top: 6),
-                                                        ),
-                                                        Expanded(
-                                                          child: Text(
-                                                            item['text'],
-                                                            style: GoogleFonts.poppins(
-                                                              color: Colors.black,
-                                                              fontSize: 11,
-                                                              height: 1.6,
+                                                          Expanded(
+                                                            child: Text(
+                                                              item['text'],
+                                                              style: GoogleFonts.poppins(
+                                                                color: Colors.black,
+                                                                fontSize: 11,
+                                                                height: 1.6,
+                                                              ),
                                                             ),
                                                           ),
+                                                        ],
+                                                      );
+                                                    } else {
+                                                      return Padding(
+                                                        padding: const EdgeInsets.only(left: 14),
+                                                        child: Text(
+                                                          item['text'],
+                                                          style: GoogleFonts.poppins(
+                                                            color: Colors.black,
+                                                            fontSize: 12,
+                                                            height: 1.7,
+                                                          ),
                                                         ),
-                                                      ],
+                                                      );
+                                                    }
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                              // Vertical divider
+                                              Container(
+                                                margin: const EdgeInsets.symmetric(horizontal: 4,),
+                                                width: 2,
+                                                height: 120,
+                                                color: Colors.grey.shade200,
+                                              ),
+                                              // Right Side: Water, Temp, Flow, Symptoms
+                                              Expanded(
+                                                flex: 2,
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: right.map<Widget>((item) {
+                                                    if (item['type'] == 'water' || item['type'] == 'temperature' || item['type'] == 'weight') {
+                                                      return Padding(
+                                                        padding: const EdgeInsets.only(bottom: 3),
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(item['icon'], color: Colors.grey[800], size: 15),
+                                                            const SizedBox(width: 5),
+                                                            Text(
+                                                              item['text'],
+                                                              style: GoogleFonts.poppins(
+                                                                fontWeight: FontWeight.w400,
+                                                                fontSize: 12,
+                                                                color: Colors.black,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    }
+                                                    if (item['type'] == 'flow') {
+                                                      return Padding(
+                                                        padding: const EdgeInsets.only(bottom: 4),
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(item['icon'], size: 15, color: Colors.pink.shade300),
+                                                            const SizedBox(width: 7),
+                                                            Row(
+                                                              children: List.generate(
+                                                                item['stars'],
+                                                                    (i) => const Icon(Icons.star, color: Colors.orange, size: 12),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    }
+                                                    // SYMPTOM: use Image.asset for asset icons
+                                                    if (item['type'] == 'symptom') {
+                                                      return Padding(
+                                                        padding: const EdgeInsets.only(bottom: 4),
+                                                        child: Row(
+                                                          children: [
+                                                            Image.asset(
+                                                              item['icon'],
+                                                              width: 18,
+                                                              height: 18,
+                                                              fit: BoxFit.contain,
+                                                            ),
+                                                            const SizedBox(width: 7),
+                                                            Row(
+                                                              children: List.generate(
+                                                                item['stars'],
+                                                                    (i) => const Icon(Icons.star, color: Colors.orange, size: 12),
+                                                              ),
+                                                            ),
+                                                        ],),
+                                                      );
+                                                    }
+                                                    return Text(
+                                                      item['text'] ?? '',
+                                                      style: GoogleFonts.poppins(
+                                                        fontWeight: FontWeight.w500,
+                                                        fontSize: 14,
+                                                        color: Colors.black,
+                                                      ),
                                                     );
-                                                  } else {
-                                                    return Padding(
-                                                      padding: const EdgeInsets.only(left: 14),
+                                                  }).toList(),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        } else if (left.isNotEmpty) {
+                                          return Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: left.map<Widget>((item) {
+                                              Color? dotColor;
+                                              if (item['type'] == 'note') dotColor = Colors.blue;
+                                              if (item['type'] == 'intercourse' || item['type'] == 'condom' || item['type'] == 'orgasm') dotColor = Colors.pink;
+                                              if (dotColor != null) {
+                                                return Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Container(
+                                                      width: 10,
+                                                      height: 10,
+                                                      decoration: BoxDecoration(
+                                                        color: dotColor,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      margin: const EdgeInsets.only(right: 4, top: 3),
+                                                    ),
+                                                    Expanded(
                                                       child: Text(
                                                         item['text'],
                                                         style: GoogleFonts.poppins(
                                                           color: Colors.black,
                                                           fontSize: 12,
-                                                          height: 1.7,
+                                                          height: 1.25,
                                                         ),
                                                       ),
-                                                    );
-                                                  }
-                                                }).toList(),
-                                              ),
-                                            ),
-                                            // Vertical divider
-                                            Container(
-                                              margin: const EdgeInsets.symmetric(horizontal: 4,),
-                                              width: 2,
-                                              height: 120,
-                                              color: Colors.grey.shade200,
-                                            ),
-                                            // Right Side: Water, Temp, Flow, Symptoms
-                                            Expanded(
-                                              flex: 2,
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: right.map<Widget>((item) {
-                                                  if (item['type'] == 'water' || item['type'] == 'temperature' || item['type'] == 'weight') {
-                                                    return Padding(
-                                                      padding: const EdgeInsets.only(bottom: 3),
-                                                      child: Row(
-                                                        children: [
-                                                          Icon(item['icon'], color: Colors.grey[800], size: 15),
-                                                          const SizedBox(width: 5),
-                                                          Text(
-                                                            item['text'],
-                                                            style: GoogleFonts.poppins(
-                                                              fontWeight: FontWeight.w400,
-                                                              fontSize: 12,
-                                                              color: Colors.black,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  }
-                                                  if (item['type'] == 'flow' || item['type'] == 'symptom') {
-                                                    return Padding(
-                                                      padding: const EdgeInsets.only(bottom: 4),
-                                                      child: Row(
-                                                        children: [
-                                                          Icon(item['icon'], size: 15, color: Colors.pink.shade300),
-                                                          const SizedBox(width: 7),
-                                                          Row(
-                                                            children: List.generate(
-                                                              item['stars'],
-                                                                  (i) => const Icon(Icons.star, color: Colors.orange, size: 12),
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  }
-                                                  return Text(
-                                                    item['text'] ?? '',
+                                                    ),
+                                                  ],
+                                                );
+                                              } else {
+                                                return Padding(
+                                                  padding: const EdgeInsets.only(left: 14),
+                                                  child: Text(
+                                                    item['text'],
                                                     style: GoogleFonts.poppins(
-                                                      fontWeight: FontWeight.w500,
-                                                      fontSize: 14,
                                                       color: Colors.black,
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      } else if (left.isNotEmpty) {
-                                        return Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: left.map<Widget>((item) {
-                                            Color? dotColor;
-                                            if (item['type'] == 'note') dotColor = Colors.blue;
-                                            if (item['type'] == 'intercourse' || item['type'] == 'condom' || item['type'] == 'orgasm') dotColor = Colors.pink;
-                                            if (dotColor != null) {
-                                              return Row(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Container(
-                                                    width: 10,
-                                                    height: 10,
-                                                    decoration: BoxDecoration(
-                                                      color: dotColor,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    margin: const EdgeInsets.only(right: 4, top: 3),
-                                                  ),
-                                                  Expanded(
-                                                    child: Text(
-                                                      item['text'],
-                                                      style: GoogleFonts.poppins(
-                                                        color: Colors.black,
-                                                        fontSize: 12,
-                                                        height: 1.25,
-                                                      ),
+                                                      fontSize: 13,
+                                                      height: 1.25,
                                                     ),
                                                   ),
-                                                ],
-                                              );
-                                            } else {
-                                              return Padding(
-                                                padding: const EdgeInsets.only(left: 14),
-                                                child: Text(
-                                                  item['text'],
-                                                  style: GoogleFonts.poppins(
-                                                    color: Colors.black,
-                                                    fontSize: 13,
-                                                    height: 1.25,
+                                                );
+                                              }
+                                            }).toList(),
+                                          );
+                                        } else if (right.isNotEmpty) {
+                                          return Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: right.map<Widget>((item) {
+                                              if (item['type'] == 'water' || item['type'] == 'temperature' || item['type'] == 'weight') {
+                                                return Padding(
+                                                  padding: const EdgeInsets.only(bottom: 3),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(item['icon'], color: Colors.grey[800], size: 15),
+                                                      const SizedBox(width: 5),
+                                                      Text(
+                                                        item['text'],
+                                                        style: GoogleFonts.poppins(
+                                                          fontWeight: FontWeight.w400,
+                                                          fontSize: 12,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
-                                                ),
-                                              );
-                                            }
-                                          }).toList(),
-                                        );
-                                      } else if (right.isNotEmpty) {
-                                        return Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: right.map<Widget>((item) {
-                                            if (item['type'] == 'water' || item['type'] == 'temperature' || item['type'] == 'weight') {
-                                              return Padding(
-                                                padding: const EdgeInsets.only(bottom: 3),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(item['icon'], color: Colors.grey[800], size: 15),
-                                                    const SizedBox(width: 5),
-                                                    Text(
-                                                      item['text'],
-                                                      style: GoogleFonts.poppins(
-                                                        fontWeight: FontWeight.w400,
-                                                        fontSize: 12,
-                                                        color: Colors.black,
+                                                );
+                                              }
+                                              if (item['type'] == 'flow') {
+                                                return Padding(
+                                                  padding: const EdgeInsets.only(bottom: 4),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(item['icon'], size: 15, color: Colors.pink.shade300),
+                                                      const SizedBox(width: 7),
+                                                      Row(
+                                                        children: List.generate(
+                                                          item['stars'],
+                                                              (i) => const Icon(Icons.star, color: Colors.orange, size: 12),
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            }
-                                            if (item['type'] == 'flow' || item['type'] == 'symptom') {
-                                              return Padding(
-                                                padding: const EdgeInsets.only(bottom: 4),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(item['icon'], size: 15, color: Colors.pink.shade300),
-                                                    const SizedBox(width: 7),
-                                                    Row(
-                                                      children: List.generate(
-                                                        item['stars'],
-                                                            (i) => const Icon(Icons.star, color: Colors.orange, size: 12),
+                                                    ],
+                                                  ),
+                                                );
+                                              }
+                                              // SYMPTOM: use Image.asset for asset icons
+                                              if (item['type'] == 'symptom') {
+                                                return Padding(
+                                                  padding: const EdgeInsets.only(bottom: 4),
+                                                  child: Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        item['icon'],
+                                                        width: 20,
+                                                        height: 20,
+                                                        fit: BoxFit.contain,
                                                       ),
-                                                    ),
-                                                  ],
+                                                      const SizedBox(width: 7),
+                                                      Row(
+                                                        children: List.generate(
+                                                          item['stars'],
+                                                              (i) => const Icon(Icons.star, color: Colors.orange, size: 12),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }
+                                              return Text(
+                                                item['text'] ?? '',
+                                                style: GoogleFonts.poppins(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 14,
+                                                  color: Colors.black,
                                                 ),
                                               );
-                                            }
-                                            return Text(
-                                              item['text'] ?? '',
-                                              style: GoogleFonts.poppins(
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 14,
-                                                color: Colors.black,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        );
+
+                                            }).toList(),
+                                          );
+                                        }
+                                        return SizedBox.shrink();
                                       }
-                                      return SizedBox.shrink();
-                                    }
-                                ),
-                            ],
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                     ],

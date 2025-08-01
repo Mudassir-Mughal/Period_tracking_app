@@ -26,10 +26,6 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   String? selectedMood;
   int? selectedFlow;
   String? selectedIntercourse;
-  String selectedTimes = '0';
-  String selectedCondomOption = "Unprotected";
-  String selectedOrgasm = "No";
-  int intercourseTimes = 0;
   double? selectedWeight;
   String? selectedWeightUnit;
   double? selectedTemperature;
@@ -38,6 +34,10 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   int glassMl = 250;
   int targetMl = 2000;
   List<int> symptomStars = [0, 0, 0, 0];
+  String selectedCondomOption = '';
+  String selectedOrgasm = '';
+  int intercourseTimes = 0;
+
 
   final List<String> symptomNames = [
     "back pain",
@@ -45,11 +45,11 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     "Headache",
     "Cravings",
   ];
-  final List<IconData> symptomIcons = [
-    Icons.back_hand,
-    Icons.trending_up,
-    Icons.gavel,
-    Icons.fitness_center,
+  final List<String> symptomAssetIcons = [
+    "assets/backpain.png",
+    "assets/Anxiety.png",
+    "assets/Headache.png",
+    "assets/cravings.png",
   ];
 
 
@@ -280,7 +280,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           controller: controller,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           textAlign: TextAlign.center,
-                          style:  GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
+                          style:  GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
                           decoration: const InputDecoration(border: InputBorder.none),
                           onChanged: (value) {
                             setState(() {
@@ -327,6 +327,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
               ),
               )
                   ),
+                  SizedBox(height: 10),
 
                 ],
               );
@@ -416,7 +417,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => MainScreen(initialTab: 2)),
+      MaterialPageRoute(builder: (_) => MainScreen(initialTab: 1)),
           (route) => false,
     );
   }
@@ -430,14 +431,45 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
         String selectedOrgasm = "";
         int intercourseTimes = 0;
 
+        // Asset image paths for your options
+        final condomIcons = {
+          "Protected": "assets/protected.png",
+          "Unprotected": "assets/unprotected.png",
+        };
+        final orgasmIcons = {
+          "Yes": "assets/orgasm_yes.png",
+          "No": "assets/orgasm_no.png",
+        };
+
+        // Helper for multi-color icons
+        Widget assetWithSelection(String path, bool selected) => Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey[200],
+            border: Border.all(
+              color: selected ? Color(0xFFFD6BA2) : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          child: Image.asset(
+            path,
+            width: 40,
+            height: 40,
+            fit: BoxFit.contain,
+          ),
+        );
+
         return StatefulBuilder(builder: (context, setStateDialog) {
           return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            contentPadding: const EdgeInsets.all(20),
+            contentPadding: const EdgeInsets.all(40),
             content: SingleChildScrollView(
               child: Column(
                 children: [
-                  Text("Condom option", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                  Text("Condom option", style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -448,15 +480,13 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                         },
                         child: Column(
                           children: [
-                            CircleAvatar(
-                              backgroundColor: selectedCondomOption == option ? Color(0xFFFD6BA2) : Colors.grey[200],
-                              child: Icon(
-                                option == "Protected" ? Icons.shield : Icons.warning,
-                                color: selectedCondomOption == option ? Color(0xFFFD6BA2) : Colors.grey,
-                              ),
+                            assetWithSelection(
+                              condomIcons[option]!,
+                              selectedCondomOption == option,
                             ),
                             const SizedBox(height: 4),
-                            Text(option),
+                            Text(option,
+                              style: GoogleFonts.poppins(fontSize: 11),),
                           ],
                         ),
                       );
@@ -464,7 +494,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   ),
 
                   const SizedBox(height: 20),
-                  Text("Female orgasm", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                  Text("Female orgasm", style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -475,15 +505,13 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                         },
                         child: Column(
                           children: [
-                            CircleAvatar(
-                              backgroundColor: selectedOrgasm == option ? Color(0xFFFD6BA2) : Colors.grey[200],
-                              child: Icon(
-                                option == "Yes" ? Icons.favorite : Icons.heart_broken,
-                                color: selectedOrgasm == option ? Color(0xFFFD6BA2) : Colors.grey,
-                              ),
+                            assetWithSelection(
+                              orgasmIcons[option]!,
+                              selectedOrgasm == option,
                             ),
                             const SizedBox(height: 4),
-                            Text(option),
+                            Text(option,
+                              style: GoogleFonts.poppins(fontSize: 11),),
                           ],
                         ),
                       );
@@ -491,25 +519,27 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   ),
 
                   const SizedBox(height: 20),
-                  Text("Times", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                  Text("Times", style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.remove_circle, color: Color(0xFFFD6BA2)),
+                        icon: const Icon(Icons.remove_circle, color: Color(0xFFFD6BA2), size: 30,),
                         onPressed: () {
                           if (intercourseTimes > 0) {
                             setStateDialog(() => intercourseTimes--);
                           }
                         },
                       ),
+                      SizedBox(width: 20),
                       Text(
                         intercourseTimes.toString(),
-                        style:  GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold),
+                        style:  GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
+                      SizedBox(width: 20),
                       IconButton(
-                        icon: const Icon(Icons.add_circle, color: Color(0xFFFD6BA2)),
+                        icon: const Icon(Icons.add_circle, color: Color(0xFFFD6BA2), size: 30,),
                         onPressed: () {
                           setStateDialog(() => intercourseTimes++);
                         },
@@ -531,8 +561,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                       });
                     },
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                      child: Text("Save",style: GoogleFonts.poppins(color: Colors.white),)
+                        padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                        child: Text("Save",style: GoogleFonts.poppins(color: Colors.white),)
                     ),
                   )
                 ],
@@ -542,18 +572,14 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
         });
       },
     );
-
-    // ✅ Update card or state when result is returned
     if (result != null) {
       setState(() {
-        selectedCondomOption = result["condom"];
-        selectedOrgasm = result["orgasm"];
-        intercourseTimes = result["times"];
+        selectedCondomOption = result['condom'] ?? '';
+        selectedOrgasm = result['orgasm'] ?? '';
+        intercourseTimes = result['times'] ?? 0;
       });
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -719,11 +745,11 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           "Flow",
-                          style: TextStyle(
+                          style: GoogleFonts.poppins(
                             fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         Row(
@@ -766,11 +792,11 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           "Note",
-                          style: TextStyle(
+                          style:GoogleFonts.poppins (
                             fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -783,7 +809,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           controller: _noteController,
                           maxLines: 4,
                           decoration: const InputDecoration(
-                            hintText: "Write something",hintStyle: TextStyle(fontSize: 14),
+                            hintText: "Write something",hintStyle: TextStyle(fontSize: 13),
                             border: InputBorder.none,
                           ),
                         ),
@@ -794,64 +820,134 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   const SizedBox(height: 10),
 
 // ❤️ Intercourse Section
-                  GestureDetector(
+                      GestureDetector(
+                        onTap: () => _showIntercourseDialog(context),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Intercourse",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Condom Option Icon & Text
+                                  Column(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.pink[50], // Always pink background
+                                          border: Border.all(
+                                            color: selectedCondomOption.isNotEmpty
+                                                ? Color(0xFFFD6BA2)
+                                                : Colors.transparent,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        width: 40,
+                                        height: 40,
+                                        alignment: Alignment.center,
+                                        child: Image.asset(
+                                          selectedCondomOption == "Protected"
+                                              ? "assets/protected.png"
+                                              : selectedCondomOption == "Unprotected"
+                                              ? "assets/unprotected.png"
+                                              : "assets/protected.png", // fallback image
+                                          width: 28,
+                                          height: 28,
+                                          fit: BoxFit.contain,
+                                           // Grey icon if not selected
+                                          colorBlendMode: selectedCondomOption.isNotEmpty ? null : BlendMode.saturation, // Greyscale blend if not selected
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        selectedCondomOption.isNotEmpty ? selectedCondomOption : "Condom",
+                                        style: GoogleFonts.poppins(fontSize: 11),
+                                      ),
 
-                    onTap: () => _showIntercourseDialog(context),
-                    child: Card(
+                                    ],
+                                  ),
+                                  // Orgasm Option Icon & Text
+                                  Column(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.pink[50],
+                                          border: Border.all(
+                                            color: selectedOrgasm.isNotEmpty ? Color(0xFFFD6BA2) : Colors.transparent,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        width: 40,
+                                        height: 40,
+                                        alignment: Alignment.center,
+                                        child: Image.asset(
+                                          selectedOrgasm == "Yes"
+                                              ? "assets/orgasm_yes.png"
+                                              : selectedOrgasm == "No"
+                                              ? "assets/orgasm_no.png"
+                                              : "assets/orgasm_yes.png", // fallback image
+                                          width: 28,
+                                          height: 28,
+                                          fit: BoxFit.contain,
+                                           // Grey out if not selected
+                                          colorBlendMode: selectedOrgasm.isNotEmpty ? null : BlendMode.saturation,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(selectedOrgasm.isNotEmpty ? selectedOrgasm : "Orgasm",
+                                        style: GoogleFonts.poppins(fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                  // Times Icon & Text
+                                  Column(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.pink[50],
 
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: ListTile(
-                        title: Text("Intercourse", style: GoogleFonts.poppins(fontSize : 14 ,fontWeight: FontWeight.w500)),
-                        subtitle: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: Colors.pink[50],
-                                  child: Icon(
-                                    selectedCondomOption == "Protected" ? Icons.shield : Icons.warning,
-                                    color: selectedCondomOption == "Protected" ? Color(0xFFFD6BA2) : Colors.grey,
+                                        ),
+                                        width: 40,
+                                        height: 40,
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          intercourseTimes.toString(),
+                                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text("Times", style: GoogleFonts.poppins(fontSize: 11)),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(selectedCondomOption),
-                              ],
-                            ),
-                            Column(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: Colors.pink[50],
-                                  child: Icon(
-                                    selectedOrgasm == "Yes" ? Icons.favorite : Icons.heart_broken,
-                                    color: selectedOrgasm == "Yes" ? Color(0xFFFD6BA2) : Colors.grey,
+                                  // Chevron at end
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_right),
+                                    onPressed: () => _showIntercourseDialog(context),
+                                    padding: EdgeInsets.only(right: 6, bottom: 12),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(selectedOrgasm),
-                              ],
-                            ),
-                            Column(
-                              children: [
-                                CircleAvatar(
-                                  backgroundColor: Colors.pink[50],
-                                  child: Text(
-                                    intercourseTimes.toString(),
-                                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text("Times" ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        trailing: const Icon(Icons.chevron_right),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
+                      SizedBox(height: 10),
                   // 😊 Moods
                   // 😊 Moods - Preview with 4 emojis and dialog button
                       Container(
@@ -867,7 +963,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                               "Moods",
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -936,7 +1032,7 @@ SizedBox(height: 10),
                             Text(
                               "Symptoms",
                               style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.bold,
                                 fontSize: 14,
                                 color: Colors.black,
                               ),
@@ -950,23 +1046,16 @@ SizedBox(height: 10),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: isPink ? Color(0xFFFD6BA2) : Colors.red,
-                                            width: 2,
-                                          ),
-                                          color: Colors.white,
-                                        ),
-                                        child: Icon(
-                                          symptomIcons[i],
-                                          color: Color(0xFFFD6BA2),
-                                          size: 22,
+                                      Padding(
+                                        padding: const EdgeInsets.all(4),
+                                        child: Image.asset(
+                                          symptomAssetIcons[i],
+                                          width: 38,
+                                          height: 38,
+                                          fit: BoxFit.contain,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      SizedBox(height: 4),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         mainAxisSize: MainAxisSize.min,
@@ -1004,7 +1093,6 @@ SizedBox(height: 10),
                         ),
                       ),
                       SizedBox(height: 10),
-
                       // Weight Card
                       GestureDetector(
                         onTap: () => showInputDialog(context, 'Weight'),
@@ -1022,7 +1110,7 @@ SizedBox(height: 10),
                                 "Weight",
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Row(
@@ -1053,7 +1141,8 @@ SizedBox(height: 10),
                             "Temperature",
                             style: GoogleFonts.poppins(
                               fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.bold,
+
                             ),
                           ),
                           Row(
@@ -1100,7 +1189,7 @@ SizedBox(height: 10),
                                         "Drink water",
                                         style: GoogleFonts.poppins(
                                           fontSize: 14,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: FontWeight.bold,
                                           color: Colors.black,
                                         ),
                                       ),

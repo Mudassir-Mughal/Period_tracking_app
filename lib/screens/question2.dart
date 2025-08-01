@@ -79,14 +79,24 @@ class _OnboardStep2State extends State<OnboardStep2> {
               const SizedBox(height: 90),
               // Question Text
               Center(
-                child: Text(
-                  'How many days does your cycle usually last?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: primaryPink,
-                  ),
-                  textAlign: TextAlign.center,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // You can tweak these multipliers to fit your design
+                    double baseFont = 18;
+                    double responsiveFont = (constraints.maxWidth / 375) * baseFont;
+                    // Clamp for small/large devices
+                    responsiveFont = responsiveFont.clamp(14.0, 22.0);
+
+                    return Text(
+                      'How many days does your period usually last?',
+                      style: GoogleFonts.poppins(
+                        fontSize: responsiveFont,
+                        fontWeight: FontWeight.bold,
+                        color: primaryPink,
+                      ),
+                      textAlign: TextAlign.center,
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 90),
