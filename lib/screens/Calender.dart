@@ -549,6 +549,11 @@ class _CalenderState extends State<Calender> with WidgetsBindingObserver {
                         _focusedDay = selectedDay;
                       });
                     },
+                    onPageChanged: (focusedDay) {
+                      setState(() {
+                        _focusedDay = focusedDay;
+                      });
+                    },
                     calendarFormat: CalendarFormat.month,
                     availableGestures: AvailableGestures.horizontalSwipe,
                     headerVisible: false,

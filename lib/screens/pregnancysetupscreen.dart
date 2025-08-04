@@ -71,10 +71,16 @@ class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
             child: Image.asset(
               'assets/bottomleft.png',
               width: 120,
-              // If you want to use native size, leave width/height out.
-              // To scale a bit on big screens, you could set max width, e.g.:
-              // width: width * 0.32,
-              // fit: BoxFit.contain,
+            ),
+          ),
+          // Animal image in top right (see green circle in screenshot)
+          Positioned(
+            top: safeTop + height * 0.045, // a bit below the status bar
+            right: width * 0.06,            // small margin from right edge
+            child: Image.asset(
+              'assets/animal7.png',          // <-- put your animal image asset here
+              width: width * 0.15,          // Responsive size (~45-70px on normal phones)
+              fit: BoxFit.contain,
             ),
           ),
           // Main content
@@ -95,11 +101,23 @@ class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
                       Center(
                         child: Column(
                           children: [
-                            Image.asset(
-                              'assets/baby.png',
-                              width: babyImageWidth.clamp(140, 240),
+                            SizedBox(
                               height: babyImageHeight.clamp(80, 140),
-                              fit: BoxFit.contain,
+                              child: Stack(
+                                children: [
+                                  // Baby image
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: Image.asset(
+                                      'assets/baby.png',
+                                      width: babyImageWidth.clamp(140, 240),
+                                      height: babyImageHeight.clamp(80, 140),
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                  // (Optional) -- can add more overlay effects here
+                                ],
+                              ),
                             ),
                             SizedBox(height: verticalSpacing * 0.6),
                             Text(

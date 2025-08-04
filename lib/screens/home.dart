@@ -332,33 +332,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
+                      // Animal image, tappable
                       GestureDetector(
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                           MaterialPageRoute(
-                             builder: (_) => EditCatScreen(selectedAnimalAsset: selectedAnimalAsset),
-                           ),
-                                );
-                        if (result != null && result is String) {
-                             setState(() {
-                             selectedAnimalAsset = result;
-                        });
-                         }
-                     },
-
-                      child:Image.asset(
-                        selectedAnimalAsset,
-                        width: 60,
-                        height: 60,
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EditCatScreen(selectedAnimalAsset: selectedAnimalAsset),
+                            ),
+                          );
+                          if (result != null && result is String) {
+                            setState(() {
+                              selectedAnimalAsset = result;
+                            });
+                          }
+                        },
+                        child: Image.asset(
+                          selectedAnimalAsset,
+                          width: 60,
+                          height: 60,
+                        ),
                       ),
-                      ),
+                      // Edit button, also tappable
                       Positioned(
                         bottom: -12,
                         right: -12,
                         child: GestureDetector(
                           onTap: () async {
-                            // Await for result from EditCatScreen
                             final result = await Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -372,8 +372,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             }
                           },
                           child: Container(
-                            width: 26,
-                            height: 26,
+                            width: 34,
+                            height: 34,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
@@ -385,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(1.0),
+                              padding: const EdgeInsets.all(0.0),
                               child: Image.asset(
                                 'assets/editcat.png',
                                 width: 18,
@@ -396,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ],
-                  ),
+                  )
                 ),
 
                             ],
