@@ -4,6 +4,7 @@ import 'package:calender_app/screens/settings.dart';
 import 'package:calender_app/screens/calender.dart';
 import 'package:calender_app/screens/pregnancysetupscreen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notifier.dart';
@@ -11,6 +12,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import 'EditcartScreen.dart';
+import 'dart:io';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _isLoaded = false;
   int? selectedDayIdx;
-  String selectedAnimalAsset = 'assets/cat_1998592.png';
+  String selectedAnimalAsset = 'assets/animal1.png';
 
 
   @override
@@ -54,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadAllUserData();
     modeChangeNotifier.addListener(_onModeChange);
+    _loadSelectedAnimal();
   }
 
   void _onModeChange() {
@@ -67,12 +70,38 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<bool> _onWillPop(BuildContext context) async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Exit App'),
+        content: Text('Are you sure you want to exit?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text('No')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text('Yes')),
+        ],
+      ),
+    );
+    return shouldExit ?? false;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _loadAllUserData();
   }
+// Add these methods in _HomeScreenState
+  Future<void> _saveSelectedAnimal(String asset) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedAnimalAsset', asset);
+  }
 
+  Future<void> _loadSelectedAnimal() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedAnimalAsset = prefs.getString('selectedAnimalAsset') ?? 'assets/animal1.png';
+    });
+  }
   Future<void> _loadAllUserData() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -101,6 +130,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoaded = true;
     });
   }
+
+
 
   void _calculatePhases() {
     if (lastPeriodStart == null) return;
@@ -140,24 +171,34 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final Color primaryPink = const Color(0xFFFF4F8B);
 
     if (!_isLoaded) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // ... inside your HomeScreen's build method:
+
     if (isPregnancy && pregnancyStartDate != null) {
       return pregnancyHomeWidget(
-        context,
-        pregnancyStartDate!,
-        pregnancyOption,
-            () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PregnancySetupScreen()),
-          );
-          await _loadAllUserData();
-          setState(() {});
-        },
+          context,
+          pregnancyStartDate!,
+          pregnancyOption,
+              () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PregnancySetupScreen()),
+            );
+            await _loadAllUserData();
+            setState(() {});
+          },
+          selectedAnimalAsset,
+              (String newAsset) async {
+            setState(() {
+              selectedAnimalAsset = newAsset;
+            });
+            await _saveSelectedAnimal(newAsset);
+          }
       );
     }
 
@@ -180,7 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return Scaffold(
+
+        return Scaffold(
       backgroundColor: theme.backgroundColor,
       extendBody: true, // <-- Important for background under nav bar!
       body: Stack(
@@ -345,6 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             setState(() {
                               selectedAnimalAsset = result;
                             });
+                            await _saveSelectedAnimal(result);
                           }
                         },
                         child: Image.asset(
@@ -369,6 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               setState(() {
                                 selectedAnimalAsset = result;
                               });
+                              await _saveSelectedAnimal(result);
                             }
                           },
                           child: Container(
@@ -413,22 +457,24 @@ class _HomeScreenState extends State<HomeScreen> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 onPressed: () => goToQuestion3(),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: theme.accentColor,
-                                  foregroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(vertical: 10),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                ),
-                                child: Text(
-                                  ' Edit Period',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+
+                              style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryPink,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
                               ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            child: Text(
+                              "Edit period",
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
                             ),
                           ),
 
@@ -574,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       // If you have a bottomNavigationBar, add it here as before
       // bottomNavigationBar: MyBottomNavBar(),
-    );
+        );
   }
 
   Widget _buildPhaseBox(String date, String title, Widget image, Color color) {
@@ -639,11 +685,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
   // PREGNANCY HOME WIDGET (no cat image, compact and clean)
+
   Widget pregnancyHomeWidget(
       BuildContext context,
       DateTime startDate,
       int displayOption,
       VoidCallback onOptionTap,
+      String selectedAnimalAsset,
+      ValueChanged<String> onAnimalChanged,
       ) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     const mainPink = Color(0xFFFD6BA2);
@@ -653,6 +702,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final daysLeft = dueDate.difference(now).inDays.clamp(0, 280);
     final weeks = daysSince ~/ 7;
     final days = daysSince % 7;
+    final Color primaryPink = const Color(0xFFFF4F8B);
 
     String trimester;
     if (weeks < 13) {
@@ -669,378 +719,393 @@ class _HomeScreenState extends State<HomeScreen> {
         : (weeks >= 27 ? 1 : 0);
     double t3Progress = (weeks >= 27) ? ((weeks - 27) + days / 7) / 13 : 0;
 
-    // Responsive for animal position
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBody: true,
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              theme.backgroundImage,
-              fit: BoxFit.cover,
+    Future<bool> _onWillPop() async {
+      final shouldExit = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Exit App'),
+          content: Text('Are you sure you want to exit?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('No'),
             ),
-          ),
-          SafeArea(
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              children: [
-                // --- Custom top bar like Report page ---
-                Padding(
-                  padding: const EdgeInsets.only(top: 4, left: 10, right: 10),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.settings),
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                          );
-                          await _loadAllUserData();
-                          // ignore: invalid_use_of_protected_member
-                          (context as Element).markNeedsBuild();
-                        },
-                        splashRadius: 28,
-                        color: mainPink,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                      Text(
-                        'Pregnanacy Tracker',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: Icon(
-                          Icons.notifications,
-                          color: theme.accentColor,
-                          size: 28,
-                        ),
-                        onPressed: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RemindersScreen(),
-                            ),
-                          );
-                          await _loadAllUserData();
-                        },
-                        splashRadius: 28,
-                      ),
-                    ],
-                  ),
-                ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Yes'),
+            ),
+          ],
+        ),
+      );
+      if (shouldExit == true) {
+        if (Platform.isAndroid) {
+          SystemNavigator.pop();
+        }
+      }
+      return false;
+    }
 
-                // --- Home icon with pregnancy info and animal (cat) overlay ---
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Home icon background (hexagon/circle)
-                    Image.asset(
-                      'assets/homeicon.png', // Use your pregnancy/home icon asset
-                      width: 220,
-                      height: 220,
-                      fit: BoxFit.contain,
-                    ),
-                    // Centered pregnancy info
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        extendBodyBehindAppBar: true,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                theme.backgroundImage,
+                fit: BoxFit.cover,
+              ),
+            ),
+            SafeArea(
+              child: ListView(
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 10, right: 10),
+                    child: Row(
                       children: [
+                        IconButton(
+                          icon: const Icon(Icons.settings),
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SettingsScreen()),
+                            );
+                          },
+                          splashRadius: 28,
+                          color: mainPink,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
                         Text(
-                          displayOption == 0 ? "${weeks}W${days}D" : "$daysLeft days",
+                          'Pregnancy Tracker',
                           style: GoogleFonts.poppins(
-                            color:theme.accentColor,
-                            fontSize: 26,
+                            fontSize: 20,
                             fontWeight: FontWeight.w500,
-                            letterSpacing: 0.7,
+                            color: Colors.black,
                           ),
                         ),
-                        Text(
-                          displayOption == 0 ? "since pregnancy" : "to baby born",
-                          style: GoogleFonts.poppins(fontSize: 13, color: theme.accentColor),
-                        ),
-                        Text(
-                          "Expected: ${DateFormat('MMM d, yyyy').format(dueDate)}",
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.black87,
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(
+                            Icons.notifications,
+                            color: theme.accentColor,
+                            size: 28,
                           ),
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RemindersScreen(),
+                              ),
+                            );
+                          },
+                          splashRadius: 28,
                         ),
                       ],
                     ),
-                    // Animal overlay (cat), same as home page
-                    Padding(
-                      padding: EdgeInsets.only(
-                        left: screenWidth * 0.6 + 10,
-                        top: screenHeight * 0.22,
+                  ),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/homeicon.png',
+                        width: 220,
+                        height: 220,
+                        fit: BoxFit.contain,
                       ),
-                      child: Stack(
-                        clipBehavior: Clip.none,
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          GestureDetector(
-                            onTap: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => EditCatScreen(
-                                    selectedAnimalAsset: selectedAnimalAsset,
-                                  ),
-                                ),
-                              );
-                              if (result != null && result is String) {
-                                // ignore: use_build_context_synchronously
-                                (context as Element).markNeedsBuild();
-                                selectedAnimalAsset = result;
-                              }
-                            },
-                            child: Image.asset(
-                              selectedAnimalAsset,
-                              width: 60,
-                              height: 60,
+                          Text(
+                            displayOption == 0
+                                ? "${weeks}W${days}D"
+                                : "$daysLeft days",
+                            style: GoogleFonts.poppins(
+                              color: theme.accentColor,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.7,
                             ),
                           ),
-                          Positioned(
-                            bottom: -12,
-                            right: -12,
-                            child: GestureDetector(
-                              onTap: () async {
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => EditCatScreen(
-                                      selectedAnimalAsset: selectedAnimalAsset,
-                                    ),
-                                  ),
-                                );
-                                if (result != null && result is String) {
-                                  // ignore: use_build_context_synchronously
-                                  (context as Element).markNeedsBuild();
-                                  selectedAnimalAsset = result;
-                                }
-                              },
-                              child: Container(
-                                width: 26,
-                                height: 26,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 3,
-                                    ),
-                                  ],
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(1.0),
-                                  child: Image.asset(
-                                    'assets/editcat.png',
-                                    width: 18,
-                                    height: 18,
-                                  ),
-                                ),
-                              ),
+                          Text(
+                            displayOption == 0
+                                ? "since pregnancy"
+                                : "to baby born",
+                            style: GoogleFonts.poppins(
+                                fontSize: 13.5, color: theme.accentColor),
+                          ),
+                          Text(
+                            "Expected: ${DateFormat('MMM d, yyyy').format(dueDate)}",
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.black87,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    // Place the button below home icon, not inside
-                  ],
-                ),
-                // --- Button below home icon ---
-                const SizedBox(height: 12),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: onOptionTap,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: mainPink,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: 10,
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      "Pregnancy option",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Trimester Card
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: mainPink.withOpacity(0.06),
-                        blurRadius: 13,
-                        offset: const Offset(0, 5),
-                      ),
+                      Padding(
+                          padding: EdgeInsets.only(
+                            left: screenWidth * 0.6 + 10,
+                            top: screenHeight * 0.22,
+                          ),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => EditCatScreen(
+                                          selectedAnimalAsset:
+                                          selectedAnimalAsset),
+                                    ),
+                                  );
+                                  if (result != null && result is String) {
+                                    onAnimalChanged(result);
+                                  }
+                                },
+                                child: Image.asset(
+                                  selectedAnimalAsset,
+                                  width: 60,
+                                  height: 60,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: -12,
+                                right: -12,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => EditCatScreen(
+                                            selectedAnimalAsset:
+                                            selectedAnimalAsset),
+                                      ),
+                                    );
+                                    if (result != null && result is String) {
+                                      onAnimalChanged(result);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 3,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(0.0),
+                                      child: Image.asset(
+                                        'assets/editcat.png',
+                                        width: 18,
+                                        height: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )),
                     ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        trimester,
+                  const SizedBox(height: 12),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: onOptionTap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryPink,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 40),
+                      ),
+                      child: Text(
+                        "Pregnancy option",
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: mainPink,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
                         ),
                       ),
-                      Row(
-                        children: [
-                          Text(
-                            "${weeks} weeks",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            "$daysLeft days to baby born",
-                            style: GoogleFonts.poppins(
-                              color: Colors.grey[800],
-                              fontWeight: FontWeight.w400,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 13,
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFDFE9),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: FractionallySizedBox(
-                                widthFactor: t1Progress.clamp(0, 1),
-                                alignment: Alignment.centerLeft,
-                                child: Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: mainPink,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            flex: 14,
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFD6E4F7),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: FractionallySizedBox(
-                                widthFactor: t2Progress.clamp(0, 1),
-                                alignment: Alignment.centerLeft,
-                                child: Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFB1BDFB),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            flex: 13,
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE7C6FF),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: FractionallySizedBox(
-                                widthFactor: t3Progress.clamp(0, 1),
-                                alignment: Alignment.centerLeft,
-                                child: Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFB35AFF),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 7),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'T1',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            'T2',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            'T3',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                myCyclesCard(periodLength, cycleLength),
-              ],
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: mainPink.withOpacity(0.06),
+                          blurRadius: 13,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          trimester,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: mainPink,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              "${weeks} weeks",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              "$daysLeft days to baby born",
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey[800],
+                                fontWeight: FontWeight.w400,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 13,
+                              child: Container(
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFDFE9),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: FractionallySizedBox(
+                                  widthFactor: t1Progress.clamp(0, 1),
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: mainPink,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              flex: 14,
+                              child: Container(
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFD6E4F7),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: FractionallySizedBox(
+                                  widthFactor: t2Progress.clamp(0, 1),
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFB1BDFB),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              flex: 13,
+                              child: Container(
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE7C6FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: FractionallySizedBox(
+                                  widthFactor: t3Progress.clamp(0, 1),
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFB35AFF),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 7),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'T1',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              'T2',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              'T3',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  myCyclesCard(5, 28),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
+// Dummy implementation; replace with your actual implementation or import
   Widget myCyclesCard(int periodLength, int cycleLength) {
     return Container(
       width: double.infinity,
@@ -1054,7 +1119,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children:  [
+            children: [
               Text(
                 "My cycles",
                 style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 16),
@@ -1086,7 +1151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 2),
-                       Text(
+                      Text(
                         "Average period",
                         style: GoogleFonts.poppins(color: Colors.black54, fontSize: 12),
                       ),
@@ -1100,8 +1165,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-  }
-}
+  }}
+
 
 class InteractiveTimelineCard extends StatelessWidget {
   final DateTime periodStart;

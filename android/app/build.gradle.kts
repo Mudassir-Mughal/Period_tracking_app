@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.calender_app"
+        applicationId = "com.period.tracker.pregnency.tracker.ovulation"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

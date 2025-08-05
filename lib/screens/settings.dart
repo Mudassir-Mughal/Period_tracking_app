@@ -23,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int cycleLength = 28;
   int periodLength = 5;
   bool isPregnancyMode = false;
+  final Color primaryPink = const Color(0xFFFF4F8B);
 
   // Keep all your existing methods (initState, _loadSettings, _updatePregnancyMode, _resetData)
   @override
@@ -310,22 +311,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _showResetConfirmation,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.accentColor,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: Text(
-                  'Reset',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+
+              style: ElevatedButton.styleFrom(
+              backgroundColor: primaryPink,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
               ),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+            ),
+            child: Text(
+              "Reset",
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
             ),
           ),
 

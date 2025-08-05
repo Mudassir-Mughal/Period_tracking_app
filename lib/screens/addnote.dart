@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +23,7 @@ class AddNoteScreen extends StatefulWidget {
 
 class _AddNoteScreenState extends State<AddNoteScreen> {
   DateTime selectedDate = DateTime.now();
+  final Color primaryPink = const Color(0xFFFF4F8B);
   final TextEditingController _noteController = TextEditingController();
   String? selectedMood;
   int? selectedFlow;
@@ -202,8 +204,15 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   }
 
   void showInputDialog(BuildContext context, String type) {
+    // If temperature dialog, input value is 0.0 and default unit is °C
+    // Else, use the existing value/unit for weight
+    double dialogInputValue =
+    type == 'Temperature' ? 0.0 : inputValue;
+    String dialogSelectedUnit =
+    type == 'Temperature' ? '°C' : selectedUnit;
+
     TextEditingController controller =
-    TextEditingController(text: inputValue.toStringAsFixed(2));
+    TextEditingController(text: dialogInputValue.toStringAsFixed(2));
 
     showDialog(
       context: context,
@@ -226,11 +235,11 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         GestureDetector(
-                          onTap: () => setState(() => selectedUnit = type == 'Weight' ? 'kg' : '°C'),
+                          onTap: () => setState(() => dialogSelectedUnit = type == 'Weight' ? 'kg' : '°C'),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                             decoration: BoxDecoration(
-                              color: selectedUnit == (type == 'Weight' ? 'kg' : '°C')
+                              color: dialogSelectedUnit == (type == 'Weight' ? 'kg' : '°C')
                                   ? const Color(0xFFFDC1DC)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(20),
@@ -240,11 +249,11 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => setState(() => selectedUnit = type == 'Weight' ? 'lb' : '°F'),
+                          onTap: () => setState(() => dialogSelectedUnit = type == 'Weight' ? 'lb' : '°F'),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                             decoration: BoxDecoration(
-                              color: selectedUnit == (type == 'Weight' ? 'lb' : '°F')
+                              color: dialogSelectedUnit == (type == 'Weight' ? 'lb' : '°F')
                                   ? const Color(0xFFFDC1DC)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(20),
@@ -267,8 +276,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                         icon: const Icon(Icons.remove_circle, color: Color(0xFFFD6BA2)),
                         onPressed: () {
                           setState(() {
-                            if (inputValue > 0) inputValue -= 0.5;
-                            controller.text = inputValue.toStringAsFixed(2);
+                            if (dialogInputValue > 0) dialogInputValue -= 0.5;
+                            controller.text = dialogInputValue.toStringAsFixed(2);
                           });
                         },
                       ),
@@ -282,9 +291,19 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           textAlign: TextAlign.center,
                           style:  GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
                           decoration: const InputDecoration(border: InputBorder.none),
+                          inputFormatters: [
+                            // Only allow numbers and at most one decimal point
+                            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              if ('.'.allMatches(newValue.text).length > 1) {
+                                return oldValue;
+                              }
+                              return newValue;
+                            }),
+                          ],
                           onChanged: (value) {
                             setState(() {
-                              inputValue = double.tryParse(value) ?? 0.0;
+                              dialogInputValue = double.tryParse(value) ?? 0.0;
                             });
                           },
                         ),
@@ -293,8 +312,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                         icon: const Icon(Icons.add_circle, color: Color(0xFFFD6BA2)),
                         onPressed: () {
                           setState(() {
-                            inputValue += 0.5;
-                            controller.text = inputValue.toStringAsFixed(2);
+                            dialogInputValue += 0.5;
+                            controller.text = dialogInputValue.toStringAsFixed(2);
                           });
                         },
                       ),
@@ -305,27 +324,27 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
 
                   // Confirm button
                   SizedBox(
-                    height: 36,
-                    child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFD6BA2),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-              if (type == 'Weight') {
-              selectedWeight = inputValue;
-              selectedWeightUnit = selectedUnit;
-              } else {
-              selectedTemperature = inputValue;
-              selectedTemperatureUnit = selectedUnit;
-              }
-              Navigator.pop(context);
-              },
-              child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
-              child: Text("Save",style: GoogleFonts.poppins(color: Colors.white , fontSize: 12 , fontWeight: FontWeight.bold),)
-              ),
-              )
+                      height: 36,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFFD6BA2),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {
+                          if (type == 'Weight') {
+                            selectedWeight = dialogInputValue;
+                            selectedWeightUnit = dialogSelectedUnit;
+                          } else {
+                            selectedTemperature = dialogInputValue;
+                            selectedTemperatureUnit = dialogSelectedUnit;
+                          }
+                          Navigator.pop(context);
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
+                          child: Text("Save", style: GoogleFonts.poppins(color: Colors.white , fontSize: 12 , fontWeight: FontWeight.bold)),
+                        ),
+                      )
                   ),
                   SizedBox(height: 10),
 
@@ -1297,18 +1316,19 @@ SizedBox(height: 10),
                       child: ElevatedButton(
                         onPressed: _saveNote,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFFD6BA2),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: primaryPink,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         child: Text(
-                          'Save',
+                          "Save",
                           style: GoogleFonts.poppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
                           ),
                         ),
                       ),

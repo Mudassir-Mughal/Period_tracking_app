@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PregnancySetupScreen extends StatefulWidget {
   const PregnancySetupScreen({super.key});
 
+
   @override
   State<PregnancySetupScreen> createState() => _PregnancySetupScreenState();
 }
@@ -15,6 +16,7 @@ class PregnancySetupScreen extends StatefulWidget {
 class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
   DateTime selectedStartDate = DateTime.now();
   int selectedOption = 0;
+  final Color primaryPink = const Color(0xFFFF4F8B);
 
   @override
   void initState() {
@@ -267,24 +269,24 @@ class _PregnancySetupScreenState extends State<PregnancySetupScreen> {
                                 const SnackBar(content: Text('Pregnancy mode On')),
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: mainPink,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                vertical: verticalSpacing * 0.7,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                            child: Text(
-                              'Save',
-                              style: GoogleFonts.poppins(
-                                fontSize: width * 0.052,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+
+                          style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryPink,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
                           ),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        child: Text(
+                          "Save",
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
                         ),
                       ),
                       SizedBox(height: verticalSpacing),

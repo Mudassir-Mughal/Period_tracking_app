@@ -7,6 +7,7 @@ import 'question1.dart';
 class OnboardStep2 extends StatefulWidget {
   final bool fromSettings;
   final int periodLength;
+  final Color primaryPink = const Color(0xFFFF4F8B);
   const OnboardStep2({super.key, required this.periodLength, this.fromSettings = false});
 
   @override
@@ -107,9 +108,9 @@ class _OnboardStep2State extends State<OnboardStep2> {
                   child: ListWheelScrollView.useDelegate(
                     controller: _scrollController,
                     itemExtent: 48,
-                    diameterRatio: 1.2,
-                    perspective: 0.003,
-                    squeeze: 1.18,
+                    diameterRatio: 1.8,
+                    perspective: 0.001,
+                    squeeze: 1.2,
                     physics: const FixedExtentScrollPhysics(),
                     onSelectedItemChanged: (value) {
                       setState(() {
@@ -191,23 +192,24 @@ class _OnboardStep2State extends State<OnboardStep2> {
                         );
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      backgroundColor: primaryPink,
-                    ),
-                    child: Text(
-                      'Next',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
+
+                  style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryPink,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                child: Text(
+                  "Next",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
                 ),
               ),
               const SizedBox(height: 90),

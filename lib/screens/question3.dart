@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'bottomnaviagtor.dart';
@@ -8,6 +9,7 @@ import 'dart:convert'; // Added for json.encode
 class OnboardStep3 extends StatefulWidget {
   final int periodLength;
   final int cycleLength;
+  final Color primaryPink = const Color(0xFFFF4F8B);
 
   const OnboardStep3({
     super.key,
@@ -127,8 +129,9 @@ class _OnboardStep3State extends State<OnboardStep3> {
       child: ListWheelScrollView.useDelegate(
         controller: controller,
         itemExtent: 48,
-        diameterRatio: 1.2,
-        squeeze: 1.18,
+        diameterRatio: 1.8,
+        perspective: 0.001,
+        squeeze: 1.2,
         physics: const FixedExtentScrollPhysics(),
         onSelectedItemChanged: (index) {
           setState(() {
@@ -369,23 +372,24 @@ class _OnboardStep3State extends State<OnboardStep3> {
                   height: 54,
                   child: ElevatedButton(
                     onPressed: () => _savePeriodDate(selectedDate),
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      backgroundColor: primaryPink,
-                    ),
-                    child: Text(
-                      'Next',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
+
+                  style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryPink,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                child: Text(
+                  "Next",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
                 ),
               ),
               const SizedBox(height: 90),

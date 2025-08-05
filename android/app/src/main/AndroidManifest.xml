@@ -1,23 +1,20 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.calender_app">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Permissions -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+
+<!-- Permissions -->
+
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
 
     <application
-        android:label="calender_app"
+        android:label="Period Tracker: Women's Cycle"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.period.tracker.pregnency.tracker.ovulation.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"

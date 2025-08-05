@@ -312,6 +312,7 @@ class _CalenderState extends State<Calender> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context).currentTheme;
     const mainPink = Color(0xFFFD6BA2);
+    final Color primaryPink = const Color(0xFFFF4F8B);
     final double deviceWidth = MediaQuery.of(context).size.width;
     final double horizontalPadding = 16.0; // Consistent margin for all devices
     final List<String> events = _selectedDay != null
@@ -766,19 +767,21 @@ class _CalenderState extends State<Calender> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
+
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFFD6BA2),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 10),
+                        backgroundColor: primaryPink,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                       child: Text(
-                        'Edit Period',
+                        "Edit period",
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
                         ),
                       ),
                     ),
@@ -851,9 +854,10 @@ class _CalenderState extends State<Calender> with WidgetsBindingObserver {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => AddNoteScreen(
-                                                date: _selectedDay!,
-                                                existingNote: noteText,
+                                              builder: (_) => MainScreen(
+                                                initialTab: 2,
+                                                editNoteDate: _selectedDay!,
+                                                editNoteText: noteText,
                                               ),
                                             ),
                                           );

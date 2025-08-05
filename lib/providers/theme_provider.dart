@@ -9,12 +9,12 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   static final ThemeOption defaultTheme = ThemeOption(
-    name: "Floral Blue",
-    backgroundColor: Color(0xFFE6F4FF),
+    name: "Cherry Blossom",
+    backgroundColor: Color(0xFFFFE6EE),
     cardColor: Colors.white,
     accentColor: Color(0xFFFD6BA2),
-    description: "Light blue theme with flower decoration",
-    backgroundImage: "assets/Theme 4.png",
+    description: "Pink theme with cherry blossom decoration",
+    backgroundImage: "assets/Theme 2.png",
   );
 
   ThemeOption get currentTheme => _currentTheme;
@@ -49,23 +49,23 @@ class ThemeProvider extends ChangeNotifier {
   static final List<ThemeOption> themeOptions = [
     ThemeOption(
       name: "Floral Blue",
-      backgroundColor: Color(0xFFE6F4FF),
-      cardColor: Colors.white,
-      accentColor: Color(0xFFFD6BA2),
-      description: "Light blue theme with flower decoration",
-      backgroundImage: "assets/Theme 4.png",
-    ),
-    ThemeOption(
-      name: "Cherry Blossom",
       backgroundColor: Color(0xFFFFE6EE),
       cardColor: Colors.white,
       accentColor: Color(0xFFFD6BA2),
-      description: "Pink theme with cherry blossom decoration",
+      description: "Light blue theme with flower decoration",
       backgroundImage: "assets/Theme 2.png",
     ),
     ThemeOption(
+      name: "Cherry Blossom",
+      backgroundColor: Color(0xFFE6F4FF),
+      cardColor: Colors.white,
+      accentColor: Color(0xFFFD6BA2),
+      description: "Pink theme with cherry blossom decoration",
+      backgroundImage: "assets/Theme 4.png",
+    ),
+    ThemeOption(
       name: "Purple Waves",
-      backgroundColor: Color(0xFFF3E6FF),
+      backgroundColor: Color(0xFFE6FFE9),
       cardColor: Colors.white,
       accentColor: Color(0xFFFD6BA2),
       description: "Light purple theme with wave pattern",
@@ -81,7 +81,7 @@ class ThemeProvider extends ChangeNotifier {
     ),
     ThemeOption(
       name: "Mint Green",
-      backgroundColor: Color(0xFFE6FFE9),
+      backgroundColor: Color(0xFFFFE6EE),
       cardColor: Colors.white,
       accentColor: Color(0xFFFD6BA2),
       description: "Light green theme",
@@ -89,7 +89,7 @@ class ThemeProvider extends ChangeNotifier {
     ),
     ThemeOption(
       name: "Sky Blue",
-      backgroundColor: Color(0xFFE6F4FF),
+      backgroundColor: Color(0xFFF3E6FF),
       cardColor: Colors.white,
       accentColor: Color(0xFFFD6BA2),
       description: "Plain light blue theme",

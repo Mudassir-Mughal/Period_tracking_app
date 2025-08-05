@@ -11,6 +11,9 @@ class ThemeScreen extends StatefulWidget {
 }
 
 class _ThemeScreenState extends State<ThemeScreen> {
+  int currentPage = 0;
+  final Color primaryPink = const Color(0xFFFF4F8B);
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -18,6 +21,12 @@ class _ThemeScreenState extends State<ThemeScreen> {
     final selectedTheme = themeProvider.currentTheme;
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = screenWidth * 0.8;
+
+    // Change: Use PageView for snapping effect!
+    final PageController pageController = PageController(
+      initialPage: themes.indexWhere((t) => t.name == selectedTheme.name),
+      viewportFraction: cardWidth / screenWidth,
+    );
 
     return Scaffold(
       backgroundColor: selectedTheme.backgroundColor,
@@ -40,10 +49,16 @@ class _ThemeScreenState extends State<ThemeScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              children: themes.map((theme) {
+            child: PageView.builder(
+              controller: pageController,
+              itemCount: themes.length,
+              onPageChanged: (index) {
+                setState(() {
+                  currentPage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final theme = themes[index];
                 final isSelected = theme.name == selectedTheme.name;
 
                 return GestureDetector(
@@ -121,7 +136,7 @@ class _ThemeScreenState extends State<ThemeScreen> {
                                   child: Center(
                                     child: Column(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           "Today",
@@ -150,7 +165,7 @@ class _ThemeScreenState extends State<ThemeScreen> {
                     ),
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
           // Apply Button
@@ -158,24 +173,25 @@ class _ThemeScreenState extends State<ThemeScreen> {
             padding: EdgeInsets.all(20),
             child: ElevatedButton(
               onPressed: () async {
-                await themeProvider.setTheme(selectedTheme);
+                await themeProvider.setTheme(themes[currentPage]);
                 if (!mounted) return;
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Theme applied successfully!'),
-                    backgroundColor: selectedTheme.accentColor,
+                    backgroundColor: themes[currentPage].accentColor,
                   ),
                 );
 
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: selectedTheme.accentColor,
-                minimumSize: Size(double.infinity, 50),
+    backgroundColor: primaryPink,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+                  borderRadius: BorderRadius.circular(30),
                 ),
+                padding: const EdgeInsets.symmetric(horizontal: 110 ,vertical: 10),
+
               ),
               child: Text(
                 "Apply",
@@ -183,10 +199,12 @@ class _ThemeScreenState extends State<ThemeScreen> {
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
+                  letterSpacing: 1.2,
                 ),
               ),
             ),
           ),
+          SizedBox(height: 20),
         ],
       ),
     );

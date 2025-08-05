@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'bottomnaviagtor.dart';
 import 'home.dart';
 import 'question1.dart';
+import 'package:flutter/services.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -32,107 +33,134 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
+  Future<bool> _onWillPop() async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Exit App'),
+        content: Text('Are you sure you want to exit?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Yes'),
+          ),
+        ],
+      ),
+    );
+    if (shouldExit == true) {
+      SystemNavigator.pop();
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFE4EC), // Light pink background
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            // Background image only above icon
-            SizedBox(
-              height: 300,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: Image.asset(
-                      'assets/image2.png', // Your background image
-                      width: 500,
-                      fit: BoxFit.contain,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFE4EC), // Light pink background
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // Background image only above icon
+              SizedBox(
+                height: 300,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: Image.asset(
+                        'assets/image2.png', // Your background image
+                        width: 500,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            // App Icon
-            Container(
-              width: 125,
-              height: 125,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.pinkAccent.withOpacity(0.13),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Image.asset(
-                'assets/appicon.png', // Your custom app icon here
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 6),
-            // Title with Google Fonts
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'My ',
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.pink[900],
-                      letterSpacing: 0.8,
+              // App Icon
+              Container(
+                width: 125,
+                height: 125,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.pinkAccent.withOpacity(0.13),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
                     ),
-                  ),
-                  TextSpan(
-                    text: 'Calendar',
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color: primaryPink,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/appicon.png', // Your custom app icon here
+                  fit: BoxFit.contain,
+                ),
               ),
-            ),
-            const Spacer(),
-            // "Let's Start" Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 50.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    checkUserSetup();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryPink,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
+              const SizedBox(height: 6),
+              // Title with Google Fonts
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'My ',
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.pink[900],
+                        letterSpacing: 0.8,
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                  child: Text(
-                    "Let's Start",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
+                    TextSpan(
+                      text: 'Calendar',
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: primaryPink,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              // "Let's Start" Button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 50.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      checkUserSetup();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryPink,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    child: Text(
+                      "Let's Start",
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 90),
-          ],
+              const SizedBox(height: 90),
+            ],
+          ),
         ),
       ),
     );
